@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nachtklok">
+<title>Nachtklok</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F2F7; --tile:#FFFFFF; --ink:#1C1C1E; --soft:#6C6C72; --line:#DCDCE2; --track:#E3E3E8;
+  --red:#E5372C; --orange:#E8890C; --blue:#0A84C9; --green:#249B4A; --on-accent:#FFFFFF;
+  --hero:var(--ink);
+  --round: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --sys: -apple-system, system-ui, "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --tile:#1C1C1E; --ink:#FFFFFF; --soft:#8E8E93; --line:#2C2C2E; --track:#3A3A3C;
+    --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#FFFFFF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --tile:#1C1C1E; --ink:#FFFFFF; --soft:#8E8E93; --line:#2C2C2E; --track:#3A3A3C;
+  --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#FFFFFF;
+  color-scheme: dark;
+}
+/* Nachtstand: alles rood op zwart */
+:root[data-night="on"]{
+  --bg:#000000; --tile:#110303; --ink:#C42B21; --soft:#701A14; --line:#2A0806; --track:#2A0806;
+  --red:#C42B21; --orange:#C42B21; --blue:#C42B21; --green:#C42B21; --on-accent:#000000;
+  color-scheme: dark;
+}
+:root[data-color="orange"]{--hero:var(--orange)}
+:root[data-color="red"]{--hero:var(--red)}
+:root[data-color="blue"]{--hero:var(--blue)}
+:root[data-color="green"]{--hero:var(--green)}
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--sys);
+  overflow:hidden; -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color .8s ease, color .8s ease;
+}
+
+/* ---------- pagina's ---------- */
+.pager{
+  height:100%; display:flex; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain;
+}
+.pager::-webkit-scrollbar{display:none}
+.page{
+  flex:0 0 100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always;
+  display:flex; flex-direction:column; gap:14px;
+  padding:14px max(16px,env(safe-area-inset-right,0px)) 30px max(16px,env(safe-area-inset-left,0px));
+}
+@media (orientation:landscape){ .page{flex-direction:row} }
+
+.tile{
+  flex:1; min-width:0; min-height:0; position:relative;
+  background:var(--tile); border-radius:30px; overflow:hidden;
+  container-type:size; transition:background-color .8s ease;
+}
+.in{position:absolute; inset:0; padding:7cqmin 8cqmin; display:flex; flex-direction:column}
+.head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:max(13px,6.4cqh); font-weight:600; flex:none}
+.head .sub{color:var(--soft); font-weight:500}
+.num{font-family:var(--round); font-variant-numeric:tabular-nums}
+
+/* analoge klok */
+.analog .in{padding:5cqmin; align-items:center; justify-content:center}
+.analog svg{width:100%; height:100%; display:block}
+
+/* kalender */
+.cal .head .t{color:var(--red)}
+.cal-grid{
+  flex:1; min-height:0; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr;
+  align-items:center; justify-items:center; margin-top:2cqh;
+  font-family:var(--round); font-weight:600; font-size:min(6.4cqh,5.8cqw);
+}
+.cal-grid .wd{color:var(--soft); font-size:.78em}
+.cal-grid .day{width:1.85em; height:1.85em; display:grid; place-items:center; border-radius:50%; font-variant-numeric:tabular-nums}
+.cal-grid .today{background:var(--red); color:var(--on-accent)}
+
+/* digitale klok */
+.page-digital{align-items:center; justify-content:center; text-align:center; flex-direction:column !important; gap:2vh}
+.dig-date{font-size:clamp(17px,3.2vw + 4px,30px); font-weight:600; color:var(--hero)}
+.dig-time{
+  font-family:var(--round); font-weight:600; color:var(--hero);
+  font-size:min(30vw,58vh); line-height:.9; display:flex; align-items:baseline; justify-content:center;
+}
+.dig-time .d{display:inline-block; width:.6em; text-align:center}
+.dig-time .colon{display:inline-block; width:.28em; text-align:center; transform:translateY(-.06em)}
+.dig-time .sec{font-size:.22em; color:var(--soft); margin-left:.15em; display:inline-flex}
+.dig-time .sec[hidden]{display:none}
+.dig-sub{display:flex; gap:1.4em; justify-content:center; color:var(--soft); font-size:clamp(14px,2vw + 4px,20px); font-weight:500}
+
+/* zon */
+.sun .head .t{color:var(--orange)}
+.sun-arc{flex:1; min-height:0; width:100%; display:block; margin:1cqh 0}
+.pair{display:flex; justify-content:space-between; flex:none}
+.pair b{display:block; font-family:var(--round); font-size:9.5cqh; font-weight:600; line-height:1.05; font-variant-numeric:tabular-nums}
+.pair small{display:block; color:var(--soft); font-size:5cqh; font-weight:500}
+.pair > div:last-child{text-align:right}
+.foot{flex:none; color:var(--soft); font-size:5.2cqh; margin-top:2.5cqh; line-height:1.3}
+
+/* maan */
+.moon .head .t{color:var(--blue)}
+.moon-body{flex:1; min-height:0; display:flex; align-items:center; gap:7cqmin}
+.moon-body svg{height:min(48cqh,40cqw); width:auto; aspect-ratio:1; flex:none}
+.moon-name{font-size:8cqh; font-weight:600; line-height:1.1}
+.moon-pct{color:var(--soft); font-size:5.4cqh; margin-top:1cqh}
+
+/* aftellen & wereldklok */
+.count .head .t{color:var(--green)}
+.world .head .t{color:var(--ink)}
+.list{flex:1; min-height:0; display:flex; flex-direction:column; margin-top:2cqh}
+.row{flex:1; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--line); min-height:0}
+.row .l{min-width:0}
+.row .n{font-size:6.2cqh; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.row .s{font-size:4.6cqh; color:var(--soft); margin-top:.3cqh}
+.row .r{font-family:var(--round); font-size:8.6cqh; font-weight:600; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+.row .r small{font-family:var(--sys); font-size:.55em; color:var(--soft); font-weight:500; margin-left:.25em}
+
+/* ---------- puntjes ---------- */
+.dots{
+  position:fixed; z-index:4; left:50%; transform:translateX(-50%);
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px);
+  display:flex; gap:9px;
+}
+.dots button{width:7px; height:7px; padding:0; border:0; border-radius:50%; background:var(--soft); opacity:.45; cursor:pointer}
+.dots button[aria-current="true"]{opacity:1; background:var(--ink)}
+
+.warn{
+  position:fixed; z-index:6; left:50%; transform:translateX(-50%);
+  top:calc(env(safe-area-inset-top,0px) + 6px);
+  font-size:13px; font-weight:500; color:var(--ink); background:var(--tile);
+  border:1px solid var(--line); border-radius:999px; padding:6px 12px; white-space:nowrap;
+}
+.warn[hidden]{display:none}
+
+.dim{position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:5; transition:opacity .3s}
+
+/* ---------- instellingen ---------- */
+.panel{
+  position:fixed; z-index:10; left:50%;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  transform:translate(-50%,calc(100% + 40px));
+  width:min(720px,calc(100% - 24px)); max-height:calc(100% - 24px); overflow:auto;
+  background:var(--tile); color:var(--ink); border:1px solid var(--line); border-radius:24px;
+  padding:14px 16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 22px;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.panel.open{transform:translate(-50%,0)}
+.set{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:15px; min-height:36px}
+.set > span{font-weight:600}
+.seg{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+.seg button,.toggle,.btn{font:inherit; font-size:14px; color:var(--ink); background:transparent; border:0; padding:7px 12px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--tile)}
+.toggle,.btn{border:1px solid var(--line); border-radius:999px}
+.toggle{min-width:64px}
+.toggle[aria-pressed="true"]{background:var(--ink); color:var(--tile); border-color:var(--ink)}
+.swatches{display:flex; gap:10px}
+.swatches button{width:26px; height:26px; border-radius:50%; border:2px solid var(--line); padding:0; cursor:pointer}
+.swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--tile),0 0 0 4px var(--ink)}
+select{font:inherit; font-size:14px; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:6px 8px; max-width:150px}
+.loc{display:flex; gap:8px; align-items:center}
+input[type="range"]{width:min(200px,45vw); accent-color:var(--ink)}
+.note{font-size:13px; color:var(--soft); grid-column:1/-1; min-height:1em}
+.state{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--soft)}
+.state i{width:8px; height:8px; border-radius:50%; border:1.5px solid currentColor}
+.state.on i{background:var(--green); border-color:var(--green)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+
+/* ---------- start ---------- */
+.start{
+  position:fixed; inset:0; z-index:20; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) 28px calc(env(safe-area-inset-bottom,0px) + 24px);
+  cursor:pointer;
+}
+.start[hidden]{display:none}
+.start h1{font-family:var(--round); font-weight:700; font-size:clamp(40px,10vw,72px); margin:0 0 .3em; line-height:1}
+.start p{margin:0 0 .5em; max-width:36ch; line-height:1.45; color:var(--soft); font-size:17px}
+.start .go{margin-top:1.1em; font:inherit; font-weight:600; font-size:17px; background:var(--ink); color:var(--bg); border:0; border-radius:999px; padding:14px 30px; cursor:pointer}
+
+@media (prefers-reduced-motion: reduce){
+  body,.panel,.dim,.tile{transition:none}
+  .pager{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="pager" id="pager">
+  <section class="page" aria-label="Klok en kalender">
+    <div class="tile analog"><div class="in">
+      <svg viewBox="0 0 200 200" aria-label="Analoge klok" role="img">
+        <g id="ticks"></g>
+        <g id="numbers" font-family="ui-rounded, 'SF Pro Rounded', Nunito, system-ui, sans-serif" font-weight="600" font-size="17" text-anchor="middle" fill="var(--ink)"></g>
+        <line id="hHand" x1="100" y1="100" x2="100" y2="54" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>
+        <line id="mHand" x1="100" y1="100" x2="100" y2="28" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+        <line id="sHand" x1="100" y1="116" x2="100" y2="20" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="100" cy="100" r="5" fill="var(--orange)"/>
+        <circle cx="100" cy="100" r="2" fill="var(--tile)"/>
+      </svg>
+    </div></div>
+    <div class="tile cal"><div class="in">
+      <div class="head"><span class="t" id="calMonth"></span><span class="sub" id="calWeek"></span></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div></div>
+  </section>
+
+  <section class="page page-digital" aria-label="Grote klok">
+    <div class="dig-date" id="digDate"></div>
+    <div class="dig-time" id="digTime"></div>
+    <div class="dig-sub"><span id="digSun"></span><span id="digWeek"></span></div>
+  </section>
+
+  <section class="page" aria-label="Zon en maan">
+    <div class="tile sun"><div class="in">
+      <div class="head"><span class="t">Zon</span><span class="sub" id="sunPlace"></span></div>
+      <svg class="sun-arc" viewBox="0 0 200 92" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <line x1="4" y1="80" x2="196" y2="80" stroke="var(--line)" stroke-width="1.5"/>
+        <path d="M15 80 A85 68 0 0 1 185 80" fill="none" stroke="var(--track)" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/>
+        <path id="sunLit" d="M15 80 A85 68 0 0 1 185 80" pathLength="1" fill="none" stroke="var(--orange)" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 1"/>
+        <circle id="sunDot" r="7" fill="var(--orange)" cx="15" cy="80"/>
+      </svg>
+      <div class="pair">
+        <div><small>Zon op</small><b id="sunRise">--:--</b></div>
+        <div><small>Zon onder</small><b id="sunSet">--:--</b></div>
+      </div>
+      <div class="foot" id="sunFoot"></div>
+    </div></div>
+    <div class="tile moon"><div class="in">
+      <div class="head"><span class="t">Maan</span><span class="sub" id="moonAge"></span></div>
+      <div class="moon-body">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--track)"/><path id="moonLit" fill="var(--ink)"/></svg>
+        <div><div class="moon-name" id="moonName"></div><div class="moon-pct" id="moonPct"></div></div>
+      </div>
+      <div class="foot" id="moonFoot"></div>
+    </div></div>
+  </section>
+
+  <section class="page" aria-label="Aftellen en wereldklok">
+    <div class="tile count"><div class="in">
+      <div class="head"><span class="t">Aftellen</span><span class="sub" id="yearPct"></span></div>
+      <div class="list" id="countList"></div>
+    </div></div>
+    <div class="tile world"><div class="in">
+      <div class="head"><span class="t">Wereldklok</span></div>
+      <div class="list" id="worldList"></div>
+    </div></div>
+  </section>
+</div>
+
+<nav class="dots" id="dots" aria-label="Pagina’s"></nav>
+<div class="warn" id="warn" hidden>Tik om het scherm aan te houden</div>
+<div class="dim" id="dim"></div>
+
+<section class="panel" id="panel" aria-label="Instellingen">
+  <div class="set">
+    <span>Nachtstand</span>
+    <div class="seg" role="group" aria-label="Nachtstand">
+      <button data-night="auto">Automatisch</button>
+      <button data-night="on">Aan</button>
+      <button data-night="off">Uit</button>
+    </div>
+  </div>
+  <div class="set">
+    <span>Kleur klok</span>
+    <div class="swatches" role="group" aria-label="Kleur klok">
+      <button data-color="ink" aria-label="Wit" style="background:var(--ink)"></button>
+      <button data-color="orange" aria-label="Oranje" style="background:var(--orange)"></button>
+      <button data-color="red" aria-label="Rood" style="background:var(--red)"></button>
+      <button data-color="blue" aria-label="Blauw" style="background:var(--blue)"></button>
+      <button data-color="green" aria-label="Groen" style="background:var(--green)"></button>
+    </div>
+  </div>
+  <div class="set">
+    <span>Locatie</span>
+    <div class="loc">
+      <select id="citySel" aria-label="Stad"></select>
+      <button class="btn" id="locBtn">Mijn locatie</button>
+    </div>
+  </div>
+  <div class="set">
+    <span>Seconden</span>
+    <button class="toggle" id="secToggle">Aan</button>
+  </div>
+  <div class="set">
+    <span>Helderheid</span>
+    <input type="range" id="bright" min="20" max="100" step="5" aria-label="Helderheid">
+  </div>
+  <div class="set">
+    <span>Scherm</span>
+    <div class="state" id="state"><i></i><span id="stateText">Kan uitgaan</span></div>
+  </div>
+  <div class="note" id="note">Veeg naar links of rechts voor andere schermen.</div>
+</section>
+
+<div class="start" id="start" role="button" tabindex="0">
+  <h1>Nachtklok</h1>
+  <p>Het scherm blijft aan zolang deze pagina open is.</p>
+  <p>Zet je iPhone aan de lader en leg hem op zijn kant. Veeg voor meer schermen, tik voor instellingen.</p>
+  <button class="go" id="go">Klok starten</button>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement;
+  const pad = n => String(n).padStart(2,'0');
+  const hm = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const DAY = 86400000;
+  const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  /* ---------- steden ---------- */
+  const CITIES = [
+    ['Amsterdam',52.37,4.90],['Rotterdam',51.92,4.48],['Den Haag',52.08,4.30],['Utrecht',52.09,5.12],
+    ['Eindhoven',51.44,5.48],['Groningen',53.22,6.57],['Zwolle',52.52,6.09],['Maastricht',50.85,5.69],
+    ['Brussel',50.85,4.35],['Antwerpen',51.22,4.40],['Gent',51.05,3.72]
+  ];
+
+  /* ---------- voorkeuren ---------- */
+  const defaults = {night:'auto', seconds:true, bright:100, color:'ink', page:1, loc:{name:'Utrecht',lat:52.09,lng:5.12}};
+  let prefs = {...defaults};
+  try{
+    const saved = JSON.parse(localStorage.getItem('nachtklok-prefs') || 'null');
+    if(saved && typeof saved === 'object') prefs = {...defaults, ...saved};
+  }catch(e){}
+  function savePrefs(){ try{ localStorage.setItem('nachtklok-prefs', JSON.stringify(prefs)); }catch(e){} }
+
+  /* ---------- analoge klok opbouwen ---------- */
+  (function buildFace(){
+    const ns = 'http://www.w3.org/2000/svg';
+    let ticks = '';
+    for(let i=0;i<60;i++){
+      const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
+      const r1 = 96, r2 = big ? 86 : 91;
+      ticks += '<line x1="'+(100+r1*Math.sin(a)).toFixed(2)+'" y1="'+(100-r1*Math.cos(a)).toFixed(2)+
+               '" x2="'+(100+r2*Math.sin(a)).toFixed(2)+'" y2="'+(100-r2*Math.cos(a)).toFixed(2)+
+               '" stroke="'+(big?'var(--ink)':'var(--soft)')+'" stroke-width="'+(big?2.6:1.2)+'" stroke-linecap="round"/>';
+    }
+    $('ticks').innerHTML = ticks;
+    let nums = '';
+    for(let h=1;h<=12;h++){
+      const a = h * 30 * Math.PI / 180;
+      nums += '<text x="'+(100+72*Math.sin(a)).toFixed(2)+'" y="'+(100-72*Math.cos(a)+6).toFixed(2)+'">'+h+'</text>';
+    }
+    $('numbers').innerHTML = nums;
+  })();
+
+  /* ---------- berekeningen ---------- */
+  function isoWeek(d){
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(t.getUTCFullYear(),0,1));
+    return Math.ceil(((t - y0) / DAY + 1) / 7);
+  }
+
+  const SYN = 29.530588853;
+  function moonPhase(d){
+    let p = ((d.getTime() - Date.UTC(2000,0,6,18,14)) / DAY / SYN) % 1;
+    return p < 0 ? p + 1 : p;
+  }
+  const MOON_NAMES = ['Nieuwe maan','Wassende sikkel','Eerste kwartier','Wassende maan','Volle maan','Afnemende maan','Laatste kwartier','Afnemende sikkel'];
+  function moonPath(p){
+    const r=10, c=12, rx = Math.abs(Math.cos(2*Math.PI*p)) * r;
+    const waxing = p < 0.5;
+    const outer = waxing ? 1 : 0;
+    const inner = waxing ? (p < 0.25 ? 0 : 1) : (p < 0.75 ? 0 : 1);
+    return 'M'+c+' '+(c-r)+' A'+r+' '+r+' 0 0 '+outer+' '+c+' '+(c+r)+' A'+rx.toFixed(2)+' '+r+' 0 0 '+inner+' '+c+' '+(c-r)+'Z';
+  }
+
+  // Zonsopkomst en -ondergang (zelfde methode als SunCalc)
+  function sunTimes(date, lat, lng){
+    const rad = Math.PI/180, J1970 = 2440588, J2000 = 2451545, e = rad*23.4397;
+    const noonLocal = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
+    const d = noonLocal.valueOf()/DAY - 0.5 + J1970 - J2000;
+    const lw = rad * -lng, phi = rad * lat;
+    const n = Math.round(d - 0.0009 - lw/(2*Math.PI));
+    const ds = 0.0009 + lw/(2*Math.PI) + n;
+    const M = rad*(357.5291 + 0.98560028*ds);
+    const C = rad*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M));
+    const L = M + C + rad*102.9372 + Math.PI;
+    const dec = Math.asin(Math.sin(L)*Math.sin(e));
+    const Jnoon = J2000 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
+    const cosw = (Math.sin(rad*-0.833) - Math.sin(phi)*Math.sin(dec)) / (Math.cos(phi)*Math.cos(dec));
+    const fromJ = j => new Date((j + 0.5 - J1970) * DAY);
+    if(cosw > 1) return {polar:'night'};
+    if(cosw < -1) return {polar:'day'};
+    const w = Math.acos(cosw);
+    const Jset = J2000 + 0.0009 + (w + lw)/(2*Math.PI) + n + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
+    const Jrise = Jnoon - (Jset - Jnoon);
+    return {rise:fromJ(Jrise), set:fromJ(Jset)};
+  }
+
+  function easter(y){
+    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+      g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
+      l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+      mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+    return new Date(y,mo-1,da);
+  }
+  function nthSunday(y, month, n){
+    const first = new Date(y, month, 1);
+    return new Date(y, month, 1 + ((7 - first.getDay()) % 7) + 7*(n-1));
+  }
+  const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  function eventsFor(y){
+    const e = easter(y);
+    let koning = new Date(y,3,27); if(koning.getDay() === 0) koning = new Date(y,3,26);
+    return [
+      ['Nieuwjaarsdag', new Date(y,0,1)],
+      ['Valentijnsdag', new Date(y,1,14)],
+      ['Pasen', e],
+      ['Koningsdag', koning],
+      ['Bevrijdingsdag', new Date(y,4,5)],
+      ['Moederdag', nthSunday(y,4,2)],
+      ['Hemelvaartsdag', addDays(e,39)],
+      ['Pinksteren', addDays(e,49)],
+      ['Vaderdag', nthSunday(y,5,3)],
+      ['Sinterklaas', new Date(y,11,5)],
+      ['Kerstmis', new Date(y,11,25)],
+      ['Oudejaarsavond', new Date(y,11,31)]
+    ];
+  }
+
+  const WORLD = [['Londen','Europe/London'],['New York','America/New_York'],['Tokio','Asia/Tokyo'],['Sydney','Australia/Sydney']];
+  const zoneFmt = {};
+  function zoneWall(tz, now){
+    if(!zoneFmt[tz]) zoneFmt[tz] = new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',hourCycle:'h23'});
+    const parts = zoneFmt[tz].formatToParts(now), g = t => Number(parts.find(p => p.type === t).value);
+    return new Date(g('year'), g('month')-1, g('day'), g('hour') % 24, g('minute'));
+  }
+
+  /* ---------- formatters ---------- */
+  const fWeekday = new Intl.DateTimeFormat('nl-NL',{weekday:'long'});
+  const fDayMonth = new Intl.DateTimeFormat('nl-NL',{day:'numeric',month:'long'});
+  const fMonth = new Intl.DateTimeFormat('nl-NL',{month:'long'});
+  const fShort = new Intl.DateTimeFormat('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+  const digits = s => s.split('').map(c => '<span class="d">'+c+'</span>').join('');
+
+  /* ---------- tekenen ---------- */
+  function drawAnalog(now){
+    const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
+    $('hHand').setAttribute('transform','rotate('+((h + m/60)*30)+' 100 100)');
+    $('mHand').setAttribute('transform','rotate('+((m + s/60)*6)+' 100 100)');
+    $('sHand').setAttribute('transform','rotate('+(s*6)+' 100 100)');
+  }
+
+  function drawDigital(now){
+    const t = pad(now.getHours()) + pad(now.getMinutes());
+    $('digTime').innerHTML = digits(t.slice(0,2)) + '<span class="colon">:</span>' + digits(t.slice(2)) +
+      '<span class="sec"'+(prefs.seconds?'':' hidden')+'>'+digits(pad(now.getSeconds()))+'</span>';
+    $('digTime').setAttribute('aria-label','Het is ' + now.getHours() + ':' + pad(now.getMinutes()));
+  }
+
+  function drawCalendar(now){
+    $('calMonth').textContent = cap(fMonth.format(now));
+    $('calWeek').textContent = 'Week ' + isoWeek(now);
+    const y = now.getFullYear(), mo = now.getMonth();
+    const offset = (new Date(y,mo,1).getDay() + 6) % 7;
+    const days = new Date(y,mo+1,0).getDate();
+    let html = ['M','D','W','D','V','Z','Z'].map(w => '<span class="wd">'+w+'</span>').join('');
+    for(let i=0;i<offset;i++) html += '<span></span>';
+    for(let d=1; d<=days; d++) html += '<span class="day'+(d===now.getDate()?' today':'')+'">'+d+'</span>';
+    $('calGrid').innerHTML = html;
+  }
+
+  function drawSun(now){
+    const loc = prefs.loc;
+    $('sunPlace').textContent = loc.name;
+    const t = sunTimes(now, loc.lat, loc.lng);
+    const dot = $('sunDot'), lit = $('sunLit');
+    if(t.polar){
+      $('sunRise').textContent = $('sunSet').textContent = '--:--';
+      $('sunFoot').textContent = t.polar === 'day' ? 'De zon gaat vandaag niet onder' : 'De zon komt vandaag niet op';
+      $('digSun').textContent = '';
+      return;
+    }
+    $('sunRise').textContent = hm(t.rise);
+    $('sunSet').textContent = hm(t.set);
+    const len = t.set - t.rise;
+    const tm = sunTimes(addDays(now,1), loc.lat, loc.lng);
+    const diff = tm.polar ? 0 : Math.round(((tm.set - tm.rise) - len) / 60000);
+    const lh = Math.floor(len/3600000), lm = Math.round((len % 3600000)/60000);
+    $('sunFoot').textContent = lh + ' u ' + lm + ' min daglicht, morgen ' +
+      (diff === 0 ? 'even lang' : Math.abs(diff) + ' min ' + (diff > 0 ? 'langer' : 'korter'));
+
+    const p = (now - t.rise) / len;
+    if(p >= 0 && p <= 1){
+      dot.setAttribute('cx', (100 - 85*Math.cos(Math.PI*p)).toFixed(2));
+      dot.setAttribute('cy', (80 - 68*Math.sin(Math.PI*p)).toFixed(2));
+      dot.setAttribute('fill','var(--orange)'); dot.setAttribute('stroke','none');
+      lit.setAttribute('stroke-dasharray', p.toFixed(4) + ' 1');
+    }else{
+      const before = p < 0;
+      dot.setAttribute('cx', before ? '15' : '185'); dot.setAttribute('cy','86');
+      dot.setAttribute('fill','var(--tile)'); dot.setAttribute('stroke','var(--soft)'); dot.setAttribute('stroke-width','1.5');
+      lit.setAttribute('stroke-dasharray', (before ? 0 : 1) + ' 1');
+    }
+    if(now < t.rise) $('digSun').textContent = 'Zon op om ' + hm(t.rise);
+    else if(now < t.set) $('digSun').textContent = 'Zon onder om ' + hm(t.set);
+    else $('digSun').textContent = tm.polar ? '' : 'Morgen zon op om ' + hm(tm.rise);
+  }
+
+  function drawMoon(now){
+    const p = moonPhase(now);
+    $('moonLit').setAttribute('d', moonPath(p));
+    $('moonName').textContent = MOON_NAMES[Math.floor(p*8 + 0.5) % 8];
+    $('moonPct').textContent = Math.round((1 - Math.cos(2*Math.PI*p)) / 2 * 100) + '% verlicht';
+    const age = Math.floor(p * SYN);
+    $('moonAge').textContent = 'Dag ' + (age + 1);
+    const toFull = ((0.5 - p + 1) % 1) * SYN, toNew = ((1 - p) % 1) * SYN;
+    const say = (n, what) => {
+      const d = Math.round(n);
+      return what + (d === 0 ? ' vandaag' : d === 1 ? ' morgen' : ' over ' + d + ' dagen');
+    };
+    $('moonFoot').innerHTML = say(toFull,'Volle maan') + '<br>' + say(toNew,'Nieuwe maan');
+  }
+
+  function drawCountdown(now){
+    const today = midnight(now), y = today.getFullYear();
+    const list = eventsFor(y).concat(eventsFor(y+1))
+      .map(([n,d]) => [n, d, Math.round((midnight(d) - today)/DAY)])
+      .filter(e => e[2] >= 0).sort((a,b) => a[2]-b[2]).slice(0,3);
+    $('countList').innerHTML = list.map(([n,d,days]) =>
+      '<div class="row"><div class="l"><div class="n">'+n+'</div><div class="s">'+cap(fShort.format(d))+'</div></div>'+
+      '<div class="r">'+(days === 0 ? 'Vandaag' : days === 1 ? 'Morgen' : days+'<small>dagen</small>')+'</div></div>'
+    ).join('');
+    const start = new Date(y,0,1), end = new Date(y+1,0,1);
+    $('yearPct').textContent = y + ' is ' + Math.floor((now - start)/(end - start)*100) + '% voorbij';
+  }
+
+  function drawWorld(now){
+    const local = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    $('worldList').innerHTML = WORLD.map(([city,tz]) => {
+      const w = zoneWall(tz, now);
+      const dd = Math.round((midnight(w) - midnight(local))/DAY);
+      const day = dd === 0 ? 'Vandaag' : dd > 0 ? 'Morgen' : 'Gisteren';
+      const h = Math.round((w - local)/1800000)/2;
+      const off = h === 0 ? 'zelfde tijd' : (h > 0 ? '+' : '−') + String(Math.abs(h)).replace('.',',') + ' u';
+      return '<div class="row"><div class="l"><div class="n">'+city+'</div><div class="s">'+day+', '+off+'</div></div>'+
+             '<div class="r">'+hm(w)+'</div></div>';
+    }).join('');
+  }
+
+  let lastMinute = -1;
+  function render(){
+    const now = new Date();
+    drawAnalog(now);
+    drawDigital(now);
+    if(now.getMinutes() !== lastMinute){
+      lastMinute = now.getMinutes();
+      $('digDate').textContent = cap(fWeekday.format(now)) + ' ' + fDayMonth.format(now);
+      $('digWeek').textContent = 'Week ' + isoWeek(now);
+      drawCalendar(now); drawSun(now); drawMoon(now); drawCountdown(now); drawWorld(now);
+      applyNight(now);
+    }
+  }
+  function tick(){ render(); setTimeout(tick, 1000 - (Date.now() % 1000) + 10); }
+
+  /* ---------- weergave-instellingen ---------- */
+  function applyNight(now){
+    const h = (now || new Date()).getHours();
+    const on = prefs.night === 'on' || (prefs.night === 'auto' && (h >= 22 || h < 7));
+    if(on) root.setAttribute('data-night','on'); else root.removeAttribute('data-night');
+  }
+  function applyColor(){ if(prefs.color === 'ink') root.removeAttribute('data-color'); else root.setAttribute('data-color', prefs.color); }
+  function applyBright(){ $('dim').style.opacity = ((100 - prefs.bright)/100*0.85).toFixed(3); }
+
+  const sel = $('citySel');
+  function fillCities(){
+    let html = CITIES.map(c => '<option value="'+c[0]+'">'+c[0]+'</option>').join('');
+    if(!CITIES.some(c => c[0] === prefs.loc.name)) html = '<option value="__mine">'+prefs.loc.name+'</option>' + html;
+    sel.innerHTML = html;
+    sel.value = CITIES.some(c => c[0] === prefs.loc.name) ? prefs.loc.name : '__mine';
+  }
+  function syncControls(){
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.night === prefs.night)));
+    document.querySelectorAll('.swatches button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.color === prefs.color)));
+    $('secToggle').setAttribute('aria-pressed', String(prefs.seconds));
+    $('secToggle').textContent = prefs.seconds ? 'Aan' : 'Uit';
+    $('bright').value = prefs.bright;
+    fillCities();
+  }
+  const note = t => { $('note').textContent = t; };
+
+  /* ---------- scherm aanhouden ---------- */
+  let lock = null, started = false;
+  function setState(state){
+    $('state').classList.toggle('on', state === 'on');
+    $('stateText').textContent = state === 'on' ? 'Blijft aan' : state === 'unsupported' ? 'Niet ondersteund' : 'Kan uitgaan';
+    $('warn').hidden = !started || state === 'on';
+    $('warn').textContent = state === 'unsupported'
+      ? 'Deze browser kan het scherm niet aanhouden. Open de pagina in Safari.'
+      : 'Tik om het scherm aan te houden';
+  }
+  async function keepAwake(){
+    if(!('wakeLock' in navigator)){ setState('unsupported'); return; }
+    try{
+      lock = await navigator.wakeLock.request('screen');
+      setState('on');
+      lock.addEventListener('release', () => { lock = null; setState('off'); });
+    }catch(e){ lock = null; setState('off'); }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && started){
+      lastMinute = -1; render();
+      if(!lock) keepAwake();
+    }
+  });
+  function start(){ started = true; $('start').hidden = true; keepAwake(); }
+  $('start').addEventListener('click', start);
+  $('start').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); start(); } });
+
+  /* ---------- pagina's en puntjes ---------- */
+  const pager = $('pager'), count = pager.children.length;
+  $('dots').innerHTML = Array.from({length:count}, (_,i) => '<button aria-label="Pagina '+(i+1)+'"></button>').join('');
+  const dotEls = [...$('dots').children];
+  const curIdx = () => Math.max(0, Math.min(count-1, Math.round(pager.scrollLeft / pager.clientWidth) || 0));
+  function updateDots(){ const i = curIdx(); dotEls.forEach((d,j) => d.setAttribute('aria-current', String(i === j))); }
+  function goTo(i, smooth){
+    i = Math.max(0, Math.min(count-1, i));
+    pager.scrollTo({left:i*pager.clientWidth, behavior: smooth ? 'smooth' : 'auto'});
+  }
+  let scrollT;
+  pager.addEventListener('scroll', () => {
+    updateDots(); clearTimeout(scrollT);
+    scrollT = setTimeout(() => { prefs.page = curIdx(); savePrefs(); }, 250);
+  }, {passive:true});
+  window.addEventListener('resize', () => { goTo(prefs.page, false); updateDots(); });
+  dotEls.forEach((d,i) => d.addEventListener('click', e => { e.stopPropagation(); goTo(i, true); }));
+  document.addEventListener('keydown', e => {
+    if(e.target.closest && e.target.closest('.panel')) return;
+    if(e.key === 'ArrowRight') goTo(curIdx()+1, true);
+    if(e.key === 'ArrowLeft') goTo(curIdx()-1, true);
+  });
+
+  /* ---------- instellingenpaneel ---------- */
+  let hideTimer = null;
+  const panel = $('panel');
+  function openPanel(){
+    panel.classList.add('open'); clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => panel.classList.remove('open'), 8000);
+  }
+  document.addEventListener('click', e => {
+    if(!started || e.target.closest('#start') || e.target.closest('#dots')) return;
+    if(panel.contains(e.target)){ openPanel(); return; }
+    if(!lock) keepAwake();
+    if(panel.classList.contains('open')){ panel.classList.remove('open'); clearTimeout(hideTimer); }
+    else openPanel();
+  });
+  panel.addEventListener('input', openPanel);
+  panel.addEventListener('change', openPanel);
+
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    prefs.night = b.dataset.night; savePrefs(); syncControls(); applyNight();
+  }));
+  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => {
+    prefs.color = b.dataset.color; savePrefs(); syncControls(); applyColor();
+  }));
+  $('secToggle').addEventListener('click', () => { prefs.seconds = !prefs.seconds; savePrefs(); syncControls(); render(); });
+  $('bright').addEventListener('input', e => { prefs.bright = Number(e.target.value); savePrefs(); applyBright(); });
+  sel.addEventListener('change', () => {
+    const c = CITIES.find(c => c[0] === sel.value);
+    if(c){ prefs.loc = {name:c[0], lat:c[1], lng:c[2]}; savePrefs(); fillCities(); lastMinute = -1; render(); note(''); }
+  });
+  $('locBtn').addEventListener('click', () => {
+    if(!navigator.geolocation){ note('Je locatie is hier niet beschikbaar. Kies een stad.'); return; }
+    note('Locatie zoeken…');
+    navigator.geolocation.getCurrentPosition(pos => {
+      prefs.loc = {name:'Mijn locatie', lat:pos.coords.latitude, lng:pos.coords.longitude};
+      savePrefs(); fillCities(); lastMinute = -1; render(); note('Zonnetijden gelden nu voor je eigen locatie.');
+    }, () => note('Geen toegang tot je locatie. Kies een stad uit de lijst.'), {timeout:10000, maximumAge:3600000});
+  });
+
+  /* ---------- starten ---------- */
+  syncControls(); applyBright(); applyColor(); applyNight(); tick(); setState('off');
+  requestAnimationFrame(() => { goTo(prefs.page, false); updateDots(); });
+})();
+</script>
+</body>
+</html>
