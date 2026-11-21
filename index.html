@@ -15,6 +15,7 @@
 :root{
   --bg:#F2F2F7; --tile:#FFFFFF; --ink:#1C1C1E; --soft:#6C6C72; --line:#DCDCE2; --track:#E3E3E8;
   --red:#E5372C; --orange:#E8890C; --blue:#0A84C9; --green:#249B4A; --on-accent:#FFFFFF;
+  --day-tile:#FFF2D6; --night-tile:#E1E6F7; --moon-c:#5B6AA8;
   --hero:var(--ink);
   --round: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --sys: -apple-system, system-ui, "Helvetica Neue", "Segoe UI", Arial, sans-serif;
@@ -26,19 +27,22 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#000000; --tile:#1C1C1E; --ink:#FFFFFF; --soft:#8E8E93; --line:#2C2C2E; --track:#3A3A3C;
-    --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#FFFFFF;
+    --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#000000;
+    --day-tile:#2E2511; --night-tile:#121A38; --moon-c:#F3E6C4;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#000000; --tile:#1C1C1E; --ink:#FFFFFF; --soft:#8E8E93; --line:#2C2C2E; --track:#3A3A3C;
-  --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#FFFFFF;
+  --red:#FF453A; --orange:#FF9F0A; --blue:#64D2FF; --green:#30D158; --on-accent:#000000;
+  --day-tile:#2E2511; --night-tile:#121A38; --moon-c:#F3E6C4;
   color-scheme: dark;
 }
 /* Nachtstand: alles rood op zwart */
 :root[data-night="on"]{
   --bg:#000000; --tile:#110303; --ink:#C42B21; --soft:#701A14; --line:#2A0806; --track:#2A0806;
   --red:#C42B21; --orange:#C42B21; --blue:#C42B21; --green:#C42B21; --on-accent:#000000;
+  --day-tile:#110303; --night-tile:#110303; --moon-c:#C42B21;
   color-scheme: dark;
 }
 :root[data-color="orange"]{--hero:var(--orange)}
@@ -55,12 +59,10 @@ body{
   -webkit-tap-highlight-color:transparent;
   transition:background-color .8s ease, color .8s ease;
 }
+.ic{width:1em; height:1em; display:inline-block; vertical-align:-.14em; flex:none}
 
 /* ---------- pagina's ---------- */
-.pager{
-  height:100%; display:flex; overflow-x:auto; overflow-y:hidden;
-  scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain;
-}
+.pager{height:100%; display:flex; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scrollbar-width:none; overscroll-behavior-x:contain}
 .pager::-webkit-scrollbar{display:none}
 .page{
   flex:0 0 100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always;
@@ -69,15 +71,11 @@ body{
 }
 @media (orientation:landscape){ .page{flex-direction:row} }
 
-.tile{
-  flex:1; min-width:0; min-height:0; position:relative;
-  background:var(--tile); border-radius:30px; overflow:hidden;
-  container-type:size; transition:background-color .8s ease;
-}
+.tile{flex:1; min-width:0; min-height:0; position:relative; background:var(--tile); border-radius:30px; overflow:hidden; container-type:size; transition:background-color .8s ease}
 .in{position:absolute; inset:0; padding:7cqmin 8cqmin; display:flex; flex-direction:column}
 .head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:max(13px,6.4cqh); font-weight:600; flex:none}
-.head .sub{color:var(--soft); font-weight:500}
-.num{font-family:var(--round); font-variant-numeric:tabular-nums}
+.head .sub{color:var(--soft); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.foot{flex:none; color:var(--soft); font-size:5.2cqh; margin-top:2.5cqh; line-height:1.3}
 
 /* analoge klok */
 .analog .in{padding:5cqmin; align-items:center; justify-content:center}
@@ -85,11 +83,7 @@ body{
 
 /* kalender */
 .cal .head .t{color:var(--red)}
-.cal-grid{
-  flex:1; min-height:0; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr;
-  align-items:center; justify-items:center; margin-top:2cqh;
-  font-family:var(--round); font-weight:600; font-size:min(6.4cqh,5.8cqw);
-}
+.cal-grid{flex:1; min-height:0; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; align-items:center; justify-items:center; margin-top:2cqh; font-family:var(--round); font-weight:600; font-size:min(6.4cqh,5.8cqw)}
 .cal-grid .wd{color:var(--soft); font-size:.78em}
 .cal-grid .day{width:1.85em; height:1.85em; display:grid; place-items:center; border-radius:50%; font-variant-numeric:tabular-nums}
 .cal-grid .today{background:var(--red); color:var(--on-accent)}
@@ -97,15 +91,80 @@ body{
 /* digitale klok */
 .page-digital{align-items:center; justify-content:center; text-align:center; flex-direction:column !important; gap:2vh}
 .dig-date{font-size:clamp(17px,3.2vw + 4px,30px); font-weight:600; color:var(--hero)}
-.dig-time{
-  font-family:var(--round); font-weight:600; color:var(--hero);
-  font-size:min(30vw,58vh); line-height:.9; display:flex; align-items:baseline; justify-content:center;
-}
+.dig-time{font-family:var(--round); font-weight:600; color:var(--hero); font-size:min(30vw,56vh); line-height:.9; display:flex; align-items:baseline; justify-content:center}
 .dig-time .d{display:inline-block; width:.6em; text-align:center}
 .dig-time .colon{display:inline-block; width:.28em; text-align:center; transform:translateY(-.06em)}
 .dig-time .sec{font-size:.22em; color:var(--soft); margin-left:.15em; display:inline-flex}
 .dig-time .sec[hidden]{display:none}
-.dig-sub{display:flex; gap:1.4em; justify-content:center; color:var(--soft); font-size:clamp(14px,2vw + 4px,20px); font-weight:500}
+.dig-sub{display:flex; flex-wrap:wrap; gap:.5em 1.4em; justify-content:center; color:var(--soft); font-size:clamp(14px,1.8vw + 4px,20px); font-weight:500; max-width:92vw}
+.dig-sub span{display:inline-flex; align-items:center; gap:.35em; white-space:nowrap}
+
+/* dag en nacht */
+.dn{background:var(--day-tile)}
+.dn.night{background:var(--night-tile)}
+.dn-body{flex:1; min-height:0; display:flex; align-items:center; gap:6cqmin}
+.dn-body svg{height:min(46cqh,34cqw); width:auto; aspect-ratio:1; flex:none}
+.dn-msg{font-family:var(--round); font-size:10.5cqh; font-weight:700; line-height:1.05}
+.dn-sub{font-size:5.8cqh; color:var(--soft); margin-top:1.2cqh}
+.bar{height:max(6px,2.4cqh); border-radius:99px; background:var(--track); overflow:hidden; flex:none}
+.bar i{display:block; height:100%; width:0; background:var(--orange); border-radius:inherit}
+.dn.night .bar i{background:var(--moon-c)}
+
+/* herinneringen */
+.rem .head .t{color:var(--blue)}
+.rem-grid{flex:1; min-height:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(20cqw,1fr)); grid-auto-rows:1fr; gap:3cqmin; margin:3cqh 0}
+.rcell{font:inherit; color:var(--ink); background:var(--bg); border:0; border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2cqh; padding:2cqmin; min-height:0; min-width:0; cursor:default; transition:background-color .4s}
+.rcell .ic{font-size:13cqh; color:var(--soft)}
+.rcell .rn{font-size:5.2cqh; font-weight:600}
+.rcell .rt{font-size:4cqh; color:var(--soft); text-align:center; line-height:1.25}
+.rcell.on{background:var(--orange); color:var(--on-accent); cursor:pointer; animation:glow 2.4s ease-in-out infinite}
+.rcell.on .ic,.rcell.on .rt{color:var(--on-accent)}
+.rcell.done .ic{color:var(--green)}
+@keyframes glow{50%{filter:brightness(1.18)}}
+.empty{flex:1; display:grid; place-items:center; text-align:center; color:var(--soft); font-size:5.4cqh; padding:0 4cqw}
+.next{flex:none; display:flex; align-items:center; gap:4cqmin}
+.next svg{width:12cqh; height:12cqh; flex:none; transform:rotate(-90deg)}
+.next b{display:block; font-size:5.4cqh}
+.next small{display:block; font-size:4.4cqh; color:var(--soft)}
+
+/* timer */
+.timer .head .t{color:var(--orange)}
+.tm-body{flex:1; min-height:0; display:flex; align-items:center; gap:6cqmin; margin-top:2cqh}
+.tm-ring{position:relative; height:min(72cqh,50cqw); aspect-ratio:1; flex:none; border:0; background:none; padding:0; color:var(--ink); cursor:pointer}
+.tm-ring svg{width:100%; height:100%; display:block; transform:rotate(-90deg)}
+.tm-ring span{position:absolute; inset:0; display:grid; place-items:center; font-family:var(--round); font-weight:600; font-size:min(12cqh,9cqw); font-variant-numeric:tabular-nums}
+#tmArc{stroke:var(--green); transition:stroke .4s}
+#tmArc[data-level="mid"]{stroke:var(--orange)}
+#tmArc[data-level="end"]{stroke:var(--red)}
+.chips{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:2.5cqmin; min-width:0}
+.chip{font:inherit; font-size:max(13px,5cqh); font-weight:600; color:var(--ink); background:var(--bg); border:0; border-radius:999px; padding:2.4cqh 0; cursor:pointer}
+.chip.stop{grid-column:1/-1; color:var(--red)}
+
+/* wekker */
+.alarm .head .t{color:var(--red)}
+.al-big{flex:1; min-height:0; display:flex; align-items:center; gap:4cqmin}
+.al-big .ic{font-size:16cqh; color:var(--soft)}
+.al-big.set .ic{color:var(--orange)}
+.al-big b{display:block; font-family:var(--round); font-size:9cqh; font-weight:700; line-height:1.1}
+.al-big small{display:block; font-size:5cqh; color:var(--soft); margin-top:.8cqh}
+
+/* weer */
+.wx .head .t{color:var(--blue)}
+.wx-body{flex:1; min-height:0; display:flex; align-items:center; gap:5cqmin}
+.wx-ic{font-size:30cqh; line-height:0; color:var(--soft)}
+.wx-ic[data-k="sun"]{color:var(--orange)} .wx-ic[data-k="rain"],.wx-ic[data-k="thunder"]{color:var(--blue)}
+.wx-temp{font-family:var(--round); font-size:20cqh; font-weight:600; line-height:1}
+.wx-desc{font-size:5.6cqh; color:var(--soft); margin-top:1cqh}
+.wx-desc b{color:var(--red); font-weight:600}
+.wx-grid{flex:none; display:grid; grid-template-columns:repeat(4,1fr); gap:2cqmin; margin-top:2cqh}
+.wx-grid div{background:var(--bg); border-radius:16px; padding:2cqh 2cqw; min-width:0}
+.wx-grid small{display:block; font-size:4.2cqh; color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.wx-grid b{display:block; font-family:var(--round); font-size:6.4cqh; font-weight:600; white-space:nowrap}
+
+/* agenda */
+.agenda .head .t{color:var(--red)}
+.ag-list .row{flex:1 1 0; max-height:24%}
+.ag-list .r{font-size:7.4cqh}
 
 /* zon */
 .sun .head .t{color:var(--orange)}
@@ -114,7 +173,6 @@ body{
 .pair b{display:block; font-family:var(--round); font-size:9.5cqh; font-weight:600; line-height:1.05; font-variant-numeric:tabular-nums}
 .pair small{display:block; color:var(--soft); font-size:5cqh; font-weight:500}
 .pair > div:last-child{text-align:right}
-.foot{flex:none; color:var(--soft); font-size:5.2cqh; margin-top:2.5cqh; line-height:1.3}
 
 /* maan */
 .moon .head .t{color:var(--blue)}
@@ -123,91 +181,95 @@ body{
 .moon-name{font-size:8cqh; font-weight:600; line-height:1.1}
 .moon-pct{color:var(--soft); font-size:5.4cqh; margin-top:1cqh}
 
-/* aftellen & wereldklok */
+/* lijsten */
 .count .head .t{color:var(--green)}
-.world .head .t{color:var(--ink)}
 .list{flex:1; min-height:0; display:flex; flex-direction:column; margin-top:2cqh}
 .row{flex:1; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--line); min-height:0}
 .row .l{min-width:0}
 .row .n{font-size:6.2cqh; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .row .s{font-size:4.6cqh; color:var(--soft); margin-top:.3cqh}
-.row .r{font-family:var(--round); font-size:8.6cqh; font-weight:600; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
-.row .r small{font-family:var(--sys); font-size:.55em; color:var(--soft); font-weight:500; margin-left:.25em}
+.row .r{font-family:var(--round); font-size:8.6cqh; font-weight:600; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; display:flex; align-items:center; gap:3cqmin}
+.row .r small{font-family:var(--sys); font-size:.55em; color:var(--soft); font-weight:500; margin-left:-.4em}
+.pill{font-family:var(--sys); font-size:max(12px,4.6cqh); font-weight:600; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:999px; padding:.35em .9em; cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--green); border-color:var(--green); color:var(--on-accent)}
 
-/* ---------- puntjes ---------- */
-.dots{
-  position:fixed; z-index:4; left:50%; transform:translateX(-50%);
-  bottom:calc(env(safe-area-inset-bottom,0px) + 9px);
-  display:flex; gap:9px;
-}
+/* ---------- vaste elementen ---------- */
+.dots{position:fixed; z-index:4; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 9px); display:flex; gap:9px}
 .dots button{width:7px; height:7px; padding:0; border:0; border-radius:50%; background:var(--soft); opacity:.45; cursor:pointer}
 .dots button[aria-current="true"]{opacity:1; background:var(--ink)}
-
-.warn{
-  position:fixed; z-index:6; left:50%; transform:translateX(-50%);
-  top:calc(env(safe-area-inset-top,0px) + 6px);
-  font-size:13px; font-weight:500; color:var(--ink); background:var(--tile);
-  border:1px solid var(--line); border-radius:999px; padding:6px 12px; white-space:nowrap;
-}
+.warn{position:fixed; z-index:6; left:50%; transform:translateX(-50%); top:calc(env(safe-area-inset-top,0px) + 6px); font-size:13px; font-weight:500; color:var(--ink); background:var(--tile); border:1px solid var(--line); border-radius:999px; padding:6px 12px; white-space:nowrap}
 .warn[hidden]{display:none}
+.dim{position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:5; transition:opacity .6s}
 
-.dim{position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:5; transition:opacity .3s}
+/* ---------- melding ---------- */
+.alert{position:fixed; inset:0; z-index:30; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:calc(env(safe-area-inset-top,0px) + 24px) 28px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.alert[hidden]{display:none}
+.alert .ic{font-size:clamp(56px,18vh,120px); color:var(--orange)}
+.alert h2{font-family:var(--round); font-size:clamp(34px,9vw,68px); margin:.25em 0 .1em; line-height:1.05}
+.alert p{color:var(--soft); font-size:19px; margin:0 0 1.2em}
+.alert button{font:inherit; font-weight:700; font-size:20px; background:var(--ink); color:var(--bg); border:0; border-radius:999px; padding:16px 44px; cursor:pointer}
 
 /* ---------- instellingen ---------- */
 .panel{
-  position:fixed; z-index:10; left:50%;
-  bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  position:fixed; z-index:10; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
   transform:translate(-50%,calc(100% + 40px));
-  width:min(720px,calc(100% - 24px)); max-height:calc(100% - 24px); overflow:auto;
-  background:var(--tile); color:var(--ink); border:1px solid var(--line); border-radius:24px;
-  padding:14px 16px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 22px;
+  width:min(760px,calc(100% - 24px)); max-height:calc(100% - 24px); overflow:auto; overscroll-behavior:contain;
+  background:var(--tile); color:var(--ink); border:1px solid var(--line); border-radius:24px; padding:6px 18px 16px;
   transition:transform .35s cubic-bezier(.2,.8,.2,1);
 }
 .panel.open{transform:translate(-50%,0)}
-.set{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:15px; min-height:36px}
-.set > span{font-weight:600}
+.p-head{position:sticky; top:0; background:var(--tile); display:flex; justify-content:space-between; align-items:center; padding:10px 0 6px; z-index:1}
+.p-head h2{margin:0; font-size:19px}
+.panel h3{margin:14px 0 4px; font-size:14px; color:var(--soft); font-weight:600}
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:6px 24px}
+.set{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:15px; min-height:40px}
+.set > span{font-weight:600; display:inline-flex; align-items:center; gap:.4em}
+.set small{display:block; font-weight:400; color:var(--soft); font-size:12px}
+.set.col{flex-direction:column; align-items:stretch; gap:6px; padding:6px 0}
+.set-top{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.set-top > span{font-weight:600; display:inline-flex; align-items:center; gap:.4em}
+.times{display:flex; gap:6px; flex-wrap:wrap}
 .seg{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden}
 .seg button,.toggle,.btn{font:inherit; font-size:14px; color:var(--ink); background:transparent; border:0; padding:7px 12px; cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink); color:var(--tile)}
 .toggle,.btn{border:1px solid var(--line); border-radius:999px}
 .toggle{min-width:64px}
 .toggle[aria-pressed="true"]{background:var(--ink); color:var(--tile); border-color:var(--ink)}
+.btn.primary{background:var(--ink); color:var(--tile); border-color:var(--ink); font-weight:600}
 .swatches{display:flex; gap:10px}
 .swatches button{width:26px; height:26px; border-radius:50%; border:2px solid var(--line); padding:0; cursor:pointer}
 .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--tile),0 0 0 4px var(--ink)}
-select{font:inherit; font-size:14px; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:6px 8px; max-width:150px}
-.loc{display:flex; gap:8px; align-items:center}
-input[type="range"]{width:min(200px,45vw); accent-color:var(--ink)}
-.note{font-size:13px; color:var(--soft); grid-column:1/-1; min-height:1em}
+select,input[type="time"]{font:inherit; font-size:14px; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:6px 8px; max-width:160px}
+input[type="time"]{min-width:92px}
+.inline{display:flex; gap:8px; align-items:center}
+input[type="range"]{width:min(190px,42vw); accent-color:var(--ink)}
+.note{font-size:13px; color:var(--soft); margin-top:12px; line-height:1.4}
 .state{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--soft)}
 .state i{width:8px; height:8px; border-radius:50%; border:1.5px solid currentColor}
 .state.on i{background:var(--green); border-color:var(--green)}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue); outline-offset:2px}
 
 /* ---------- start ---------- */
-.start{
-  position:fixed; inset:0; z-index:20; background:var(--bg);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
-  padding:calc(env(safe-area-inset-top,0px) + 24px) 28px calc(env(safe-area-inset-bottom,0px) + 24px);
-  cursor:pointer;
-}
+.start{position:fixed; inset:0; z-index:20; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:calc(env(safe-area-inset-top,0px) + 24px) 28px calc(env(safe-area-inset-bottom,0px) + 24px); cursor:pointer}
 .start[hidden]{display:none}
 .start h1{font-family:var(--round); font-weight:700; font-size:clamp(40px,10vw,72px); margin:0 0 .3em; line-height:1}
-.start p{margin:0 0 .5em; max-width:36ch; line-height:1.45; color:var(--soft); font-size:17px}
+.start p{margin:0 0 .5em; max-width:38ch; line-height:1.45; color:var(--soft); font-size:17px}
 .start .go{margin-top:1.1em; font:inherit; font-weight:600; font-size:17px; background:var(--ink); color:var(--bg); border:0; border-radius:999px; padding:14px 30px; cursor:pointer}
 
 @media (prefers-reduced-motion: reduce){
-  body,.panel,.dim,.tile{transition:none}
-  .pager{scroll-behavior:auto}
+  body,.panel,.dim,.tile,.rcell{transition:none}
+  .rcell.on{animation:none}
 }
 </style>
 </head>
 <body>
 
 <div class="pager" id="pager">
+  <!-- 1: analoog + kalender -->
   <section class="page" aria-label="Klok en kalender">
     <div class="tile analog"><div class="in">
-      <svg viewBox="0 0 200 200" aria-label="Analoge klok" role="img">
+      <svg viewBox="-3 -3 206 206" aria-label="Analoge klok" role="img">
+        <circle id="secRing" cx="100" cy="100" r="99.5" fill="none" stroke="var(--orange)" stroke-width="2.4" stroke-linecap="round" pathLength="60" stroke-dasharray="0 60" transform="rotate(-90 100 100)"/>
         <g id="ticks"></g>
         <g id="numbers" font-family="ui-rounded, 'SF Pro Rounded', Nunito, system-ui, sans-serif" font-weight="600" font-size="17" text-anchor="middle" fill="var(--ink)"></g>
         <line id="hHand" x1="100" y1="100" x2="100" y2="54" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>
@@ -223,12 +285,75 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     </div></div>
   </section>
 
+  <!-- 2: grote klok -->
   <section class="page page-digital" aria-label="Grote klok">
     <div class="dig-date" id="digDate"></div>
     <div class="dig-time" id="digTime"></div>
-    <div class="dig-sub"><span id="digSun"></span><span id="digWeek"></span></div>
+    <div class="dig-sub" id="digSub"></div>
   </section>
 
+  <!-- 3: weer + agenda -->
+  <section class="page" aria-label="Weer en agenda">
+    <div class="tile wx"><div class="in">
+      <div class="head"><span class="t">Weer</span><span class="sub" id="wxPlace"></span></div>
+      <div class="wx-body"><div class="wx-ic" id="wxIcon"></div><div><div class="wx-temp" id="wxTemp">--°</div><div class="wx-desc" id="wxDesc"></div></div></div>
+      <div class="wx-grid" id="wxGrid"></div>
+      <div class="foot" id="wxFoot"></div>
+    </div></div>
+    <div class="tile agenda"><div class="in">
+      <div class="head"><span class="t">Agenda</span><span class="sub" id="agSub"></span></div>
+      <div class="list ag-list" id="agList"></div>
+      <div class="foot" id="agFoot"></div>
+    </div></div>
+  </section>
+
+  <!-- 4: dagritme -->
+  <section class="page" aria-label="Dag en nacht, herinneringen">
+    <div class="tile dn" id="dnTile"><div class="in">
+      <div class="head"><span class="t" id="dnDay"></span><span class="sub" id="dnTime"></span></div>
+      <div class="dn-body">
+        <svg id="dnIcon" viewBox="0 0 100 100" aria-hidden="true"></svg>
+        <div><div class="dn-msg" id="dnMsg"></div><div class="dn-sub" id="dnSub"></div></div>
+      </div>
+      <div class="bar"><i id="dnBar"></i></div>
+      <div class="foot" id="dnFoot"></div>
+    </div></div>
+    <div class="tile rem"><div class="in">
+      <div class="head"><span class="t">Herinneringen</span><span class="sub" id="remSub"></span></div>
+      <div class="rem-grid" id="remGrid"></div>
+      <div class="next" id="nextBox">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="var(--track)" stroke-width="5"/><circle id="nextRing" cx="20" cy="20" r="16" fill="none" stroke="var(--blue)" stroke-width="5" stroke-linecap="round" pathLength="1" stroke-dasharray="0 1"/></svg>
+        <div><b id="nextWhat"></b><small id="nextWhen"></small></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 4: timer + wekker -->
+  <section class="page" aria-label="Timer en wekker">
+    <div class="tile timer"><div class="in">
+      <div class="head"><span class="t">Timer</span><span class="sub" id="tmState"></span></div>
+      <div class="tm-body">
+        <button class="tm-ring act" id="tmRing" aria-label="Timer pauzeren of hervatten">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--track)" stroke-width="9"/><circle id="tmArc" cx="50" cy="50" r="44" fill="none" stroke-width="9" stroke-linecap="round" pathLength="1" stroke-dasharray="0 1"/></svg>
+          <span id="tmText">0:00</span>
+        </button>
+        <div class="chips">
+          <button class="chip act" data-min="5">5 min</button>
+          <button class="chip act" data-min="10">10 min</button>
+          <button class="chip act" data-min="15">15 min</button>
+          <button class="chip act" data-min="30">30 min</button>
+          <button class="chip stop act" id="tmStop">Stoppen</button>
+        </div>
+      </div>
+    </div></div>
+    <div class="tile alarm"><div class="in">
+      <div class="head"><span class="t">Wekker</span><span class="sub" id="alSub"></span></div>
+      <div class="al-big" id="alBig"></div>
+      <div class="list" id="alList" style="flex:none; height:44%"></div>
+    </div></div>
+  </section>
+
+  <!-- 5: zon + maan -->
   <section class="page" aria-label="Zon en maan">
     <div class="tile sun"><div class="in">
       <div class="head"><span class="t">Zon</span><span class="sub" id="sunPlace"></span></div>
@@ -254,6 +379,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     </div></div>
   </section>
 
+  <!-- 6: aftellen + wereldklok -->
   <section class="page" aria-label="Aftellen en wereldklok">
     <div class="tile count"><div class="in">
       <div class="head"><span class="t">Aftellen</span><span class="sub" id="yearPct"></span></div>
@@ -270,45 +396,53 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <div class="warn" id="warn" hidden>Tik om het scherm aan te houden</div>
 <div class="dim" id="dim"></div>
 
+<div class="alert" id="alert" hidden role="alertdialog" aria-labelledby="alertTitle">
+  <div id="alertIcon"></div>
+  <h2 id="alertTitle"></h2>
+  <p id="alertText"></p>
+  <button id="alertBtn">Stoppen</button>
+</div>
+
 <section class="panel" id="panel" aria-label="Instellingen">
-  <div class="set">
-    <span>Nachtstand</span>
-    <div class="seg" role="group" aria-label="Nachtstand">
-      <button data-night="auto">Automatisch</button>
-      <button data-night="on">Aan</button>
-      <button data-night="off">Uit</button>
+  <div class="p-head"><h2>Instellingen</h2><button class="btn primary" id="closeP">Klaar</button></div>
+
+  <h3>Weergave</h3>
+  <div class="grid">
+    <div class="set"><span>Nachtstand</span>
+      <div class="seg" role="group" aria-label="Nachtstand">
+        <button data-night="auto">Automatisch</button><button data-night="on">Aan</button><button data-night="off">Uit</button>
+      </div>
     </div>
-  </div>
-  <div class="set">
-    <span>Kleur klok</span>
-    <div class="swatches" role="group" aria-label="Kleur klok">
-      <button data-color="ink" aria-label="Wit" style="background:var(--ink)"></button>
-      <button data-color="orange" aria-label="Oranje" style="background:var(--orange)"></button>
-      <button data-color="red" aria-label="Rood" style="background:var(--red)"></button>
-      <button data-color="blue" aria-label="Blauw" style="background:var(--blue)"></button>
-      <button data-color="green" aria-label="Groen" style="background:var(--green)"></button>
+    <div class="set"><span>Kleur klok</span>
+      <div class="swatches" role="group" aria-label="Kleur klok">
+        <button data-color="ink" aria-label="Wit" style="background:var(--ink)"></button>
+        <button data-color="orange" aria-label="Oranje" style="background:var(--orange)"></button>
+        <button data-color="red" aria-label="Rood" style="background:var(--red)"></button>
+        <button data-color="blue" aria-label="Blauw" style="background:var(--blue)"></button>
+        <button data-color="green" aria-label="Groen" style="background:var(--green)"></button>
+      </div>
     </div>
+    <div class="set"><span>Helderheid overdag</span><input type="range" id="bright" min="20" max="100" step="5" aria-label="Helderheid overdag"></div>
+    <div class="set"><span>Helderheid ’s nachts</span><input type="range" id="brightNight" min="10" max="100" step="5" aria-label="Helderheid ’s nachts"></div>
+    <div class="set"><span>Seconden en secondenring</span><button class="toggle" id="secToggle">Aan</button></div>
+    <div class="set"><span>Tweede tijdzone</span><select id="zoneSel" aria-label="Tweede tijdzone"></select></div>
+    <div class="set"><span>Locatie</span><div class="inline"><select id="citySel" aria-label="Stad"></select><button class="btn" id="locBtn">Mijn locatie</button></div></div>
+    <div class="set"><span>Scherm</span><div class="state" id="state"><i></i><span id="stateText">Kan uitgaan</span></div></div>
   </div>
-  <div class="set">
-    <span>Locatie</span>
-    <div class="loc">
-      <select id="citySel" aria-label="Stad"></select>
-      <button class="btn" id="locBtn">Mijn locatie</button>
-    </div>
+
+  <h3>Dagritme en wekkers</h3>
+  <div class="grid">
+    <div class="set"><span>Opstaan<small>Als de wekker uit staat</small></span><input type="time" id="wakeT" aria-label="Opstaan"></div>
+    <div class="set"><span>Bedtijd</span><input type="time" id="bedT" aria-label="Bedtijd"></div>
+    <div class="set"><span>AL1 maandag tot vrijdag</span><div class="inline"><input type="time" id="alWeekT" aria-label="Tijd AL1"><button class="toggle" data-al="week">Aan</button></div></div>
+    <div class="set"><span>AL2 zaterdag en zondag</span><div class="inline"><input type="time" id="alWkndT" aria-label="Tijd AL2"><button class="toggle" data-al="weekend">Aan</button></div></div>
   </div>
-  <div class="set">
-    <span>Seconden</span>
-    <button class="toggle" id="secToggle">Aan</button>
-  </div>
-  <div class="set">
-    <span>Helderheid</span>
-    <input type="range" id="bright" min="20" max="100" step="5" aria-label="Helderheid">
-  </div>
-  <div class="set">
-    <span>Scherm</span>
-    <div class="state" id="state"><i></i><span id="stateText">Kan uitgaan</span></div>
-  </div>
-  <div class="note" id="note">Veeg naar links of rechts voor andere schermen.</div>
+
+  <h3>Herinneringen</h3>
+  <div class="grid" id="remSets"></div>
+  <div class="grid"><div class="set"><span>Geluid bij herinneringen</span><button class="toggle" id="remSound">Aan</button></div></div>
+
+  <div class="note" id="note">Veeg naar links of rechts voor andere schermen. De wekker en meldingen gaan alleen af als de klok open staat en het geluid van je iPhone aan staat.</div>
 </section>
 
 <div class="start" id="start" role="button" tabindex="0">
@@ -327,127 +461,185 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const DAY = 86400000;
   const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const atMin = (base, mins) => new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, mins);
+  const toMin = s => { if(!s || !/^\d{1,2}:\d{2}$/.test(s)) return null; const [h,m] = s.split(':').map(Number); return h*60 + m; };
+  const dateKey = d => d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  function dur(ms){
+    if(ms < 60000) return 'minder dan een minuut';
+    const t = Math.round(ms/60000), h = Math.floor(t/60), m = t % 60;
+    return h ? (h + ' u' + (m ? ' ' + m + ' min' : '')) : m + ' min';
+  }
+  const joinNl = a => a.length < 2 ? (a[0] || '') : a.slice(0,-1).join(', ') + ' en ' + a[a.length-1];
 
-  /* ---------- steden ---------- */
-  const CITIES = [
-    ['Amsterdam',52.37,4.90],['Rotterdam',51.92,4.48],['Den Haag',52.08,4.30],['Utrecht',52.09,5.12],
-    ['Eindhoven',51.44,5.48],['Groningen',53.22,6.57],['Zwolle',52.52,6.09],['Maastricht',50.85,5.69],
-    ['Brussel',50.85,4.35],['Antwerpen',51.22,4.40],['Gent',51.05,3.72]
-  ];
+  /* ---------- pictogrammen ---------- */
+  const ICONS = {
+    pill:'<g transform="rotate(-45 12 12)"><rect x="3.5" y="8.5" width="17" height="7" rx="3.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/></g>',
+    plate:'<circle cx="12.5" cy="12" r="5.5"/><circle cx="12.5" cy="12" r="2.6"/><path d="M3 4v5.5M5 4v5.5M3 9.5h2M4 9.5V20"/><path d="M21.5 4c-1.4 1.3-2 3.6-2 5.8h2V20"/>',
+    glass:'<path d="M6 3h12l-1.6 16.6a1.6 1.6 0 0 1-1.6 1.4H9.2a1.6 1.6 0 0 1-1.6-1.4z"/><path d="M6.7 10h10.6"/>',
+    bed:'<path d="M3 19V6M3 14h18v5M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.9"/>',
+    bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+    moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2h5"/>',
+    cloud:'<path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 9.5 4.25 4.25 0 0 0 7 18z"/>',
+    partly:'<path d="M8 2.5V4M3.6 5.6l1 1M2.5 10H4"/><path d="M5.4 12.6A3.5 3.5 0 1 1 11.3 8"/><path d="M9 20h8.5a3.5 3.5 0 0 0 .4-7A4.8 4.8 0 0 0 9 12.3 3.9 3.9 0 0 0 9 20z"/>',
+    rain:'<path d="M7 15h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 6.5 4.25 4.25 0 0 0 7 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+    snow:'<path d="M7 15h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 6.5 4.25 4.25 0 0 0 7 15z"/><path d="M8 18.5h.01M12 20.5h.01M16 18.5h.01" stroke-width="2.6"/>',
+    fog:'<path d="M4 9h16M3 13h18M5 17h14"/>',
+    thunder:'<path d="M7 15h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 6.5 4.25 4.25 0 0 0 7 15z"/><path d="M12.5 15l-2 3.5h3l-2 3.5"/>'
+  };
+  const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const icon = n => '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[n] + '</svg>';
+  const SUN_BIG = (() => { let r = '<circle cx="50" cy="50" r="19" fill="var(--orange)"/>';
+    for(let i=0;i<8;i++){ const a = i*Math.PI/4; r += '<line x1="'+(50+28*Math.cos(a)).toFixed(1)+'" y1="'+(50+28*Math.sin(a)).toFixed(1)+'" x2="'+(50+40*Math.cos(a)).toFixed(1)+'" y2="'+(50+40*Math.sin(a)).toFixed(1)+'" stroke="var(--orange)" stroke-width="6" stroke-linecap="round"/>'; }
+    return r; })();
+  const MOON_BIG = '<circle cx="46" cy="54" r="32" fill="var(--moon-c)"/><circle cx="62" cy="42" r="28" fill="var(--night-tile)"/>' +
+    '<circle cx="82" cy="20" r="3" fill="var(--moon-c)"/><circle cx="90" cy="46" r="2" fill="var(--moon-c)"/><circle cx="20" cy="14" r="2.2" fill="var(--moon-c)"/>';
+
+  /* ---------- vaste lijsten ---------- */
+  const CITIES = [['Amsterdam',52.37,4.90],['Rotterdam',51.92,4.48],['Den Haag',52.08,4.30],['Utrecht',52.09,5.12],['Eindhoven',51.44,5.48],['Groningen',53.22,6.57],['Zwolle',52.52,6.09],['Maastricht',50.85,5.69],['Brussel',50.85,4.35],['Antwerpen',51.22,4.40],['Gent',51.05,3.72]];
+  const WORLD = [['Londen','Europe/London'],['New York','America/New_York'],['Tokio','Asia/Tokyo'],['Sydney','Australia/Sydney']];
+  const ZONES = [['Londen','Europe/London'],['Lissabon','Europe/Lisbon'],['Dubai','Asia/Dubai'],['New York','America/New_York'],['Los Angeles','America/Los_Angeles'],['Curaçao','America/Curacao'],['Paramaribo','America/Paramaribo'],['Tokio','Asia/Tokyo'],['Bali','Asia/Makassar'],['Sydney','Australia/Sydney']];
+  const REMS = [{id:'med',name:'Medicijnen',icon:'pill'},{id:'eat',name:'Eten',icon:'plate'},{id:'drink',name:'Drinken',icon:'glass'},{id:'sleep',name:'Slapen',icon:'bed'}];
 
   /* ---------- voorkeuren ---------- */
-  const defaults = {night:'auto', seconds:true, bright:100, color:'ink', page:1, loc:{name:'Utrecht',lat:52.09,lng:5.12}};
-  let prefs = {...defaults};
+  const defaults = {
+    night:'auto', seconds:true, bright:100, brightNight:45, color:'ink', page:1, zone2:'',
+    loc:{name:'Utrecht',lat:52.09,lng:5.12}, wake:'07:00', bed:'22:30',
+    alarms:{week:{on:false,time:'07:00'}, weekend:{on:false,time:'09:00'}},
+    rem:{med:{on:true,times:['08:00','20:00','']}, eat:{on:true,times:['08:00','12:30','18:00']}, drink:{on:false,times:['10:00','15:00','']}, sleep:{on:true,times:['22:30','','']}},
+    remSound:true, done:{}
+  };
+  let prefs = JSON.parse(JSON.stringify(defaults));
   try{
-    const saved = JSON.parse(localStorage.getItem('nachtklok-prefs') || 'null');
-    if(saved && typeof saved === 'object') prefs = {...defaults, ...saved};
+    const s = JSON.parse(localStorage.getItem('nachtklok-prefs') || 'null');
+    if(s && typeof s === 'object'){
+      prefs = {...prefs, ...s};
+      prefs.alarms = {...defaults.alarms, ...(s.alarms || {})};
+      prefs.rem = {...defaults.rem, ...(s.rem || {})};
+      prefs.done = s.done || {};
+    }
   }catch(e){}
   function savePrefs(){ try{ localStorage.setItem('nachtklok-prefs', JSON.stringify(prefs)); }catch(e){} }
 
   /* ---------- analoge klok opbouwen ---------- */
-  (function buildFace(){
-    const ns = 'http://www.w3.org/2000/svg';
-    let ticks = '';
+  (function(){
+    let t = '';
     for(let i=0;i<60;i++){
-      const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
-      const r1 = 96, r2 = big ? 86 : 91;
-      ticks += '<line x1="'+(100+r1*Math.sin(a)).toFixed(2)+'" y1="'+(100-r1*Math.cos(a)).toFixed(2)+
-               '" x2="'+(100+r2*Math.sin(a)).toFixed(2)+'" y2="'+(100-r2*Math.cos(a)).toFixed(2)+
-               '" stroke="'+(big?'var(--ink)':'var(--soft)')+'" stroke-width="'+(big?2.6:1.2)+'" stroke-linecap="round"/>';
+      const a = i*6*Math.PI/180, big = i % 5 === 0, r2 = big ? 86 : 91;
+      t += '<line x1="'+(100+96*Math.sin(a)).toFixed(2)+'" y1="'+(100-96*Math.cos(a)).toFixed(2)+'" x2="'+(100+r2*Math.sin(a)).toFixed(2)+'" y2="'+(100-r2*Math.cos(a)).toFixed(2)+'" stroke="'+(big?'var(--ink)':'var(--soft)')+'" stroke-width="'+(big?2.6:1.2)+'" stroke-linecap="round"/>';
     }
-    $('ticks').innerHTML = ticks;
-    let nums = '';
-    for(let h=1;h<=12;h++){
-      const a = h * 30 * Math.PI / 180;
-      nums += '<text x="'+(100+72*Math.sin(a)).toFixed(2)+'" y="'+(100-72*Math.cos(a)+6).toFixed(2)+'">'+h+'</text>';
-    }
-    $('numbers').innerHTML = nums;
+    $('ticks').innerHTML = t;
+    let n = '';
+    for(let h=1;h<=12;h++){ const a = h*30*Math.PI/180; n += '<text x="'+(100+72*Math.sin(a)).toFixed(2)+'" y="'+(100-72*Math.cos(a)+6).toFixed(2)+'">'+h+'</text>'; }
+    $('numbers').innerHTML = n;
   })();
 
   /* ---------- berekeningen ---------- */
   function isoWeek(d){
     const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const day = t.getUTCDay() || 7;
-    t.setUTCDate(t.getUTCDate() + 4 - day);
-    const y0 = new Date(Date.UTC(t.getUTCFullYear(),0,1));
-    return Math.ceil(((t - y0) / DAY + 1) / 7);
+    const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day);
+    return Math.ceil(((t - new Date(Date.UTC(t.getUTCFullYear(),0,1))) / DAY + 1) / 7);
   }
-
   const SYN = 29.530588853;
-  function moonPhase(d){
-    let p = ((d.getTime() - Date.UTC(2000,0,6,18,14)) / DAY / SYN) % 1;
-    return p < 0 ? p + 1 : p;
-  }
+  function moonPhase(d){ let p = ((d.getTime() - Date.UTC(2000,0,6,18,14)) / DAY / SYN) % 1; return p < 0 ? p + 1 : p; }
   const MOON_NAMES = ['Nieuwe maan','Wassende sikkel','Eerste kwartier','Wassende maan','Volle maan','Afnemende maan','Laatste kwartier','Afnemende sikkel'];
   function moonPath(p){
-    const r=10, c=12, rx = Math.abs(Math.cos(2*Math.PI*p)) * r;
-    const waxing = p < 0.5;
-    const outer = waxing ? 1 : 0;
-    const inner = waxing ? (p < 0.25 ? 0 : 1) : (p < 0.75 ? 0 : 1);
+    const r=10, c=12, rx = Math.abs(Math.cos(2*Math.PI*p))*r, wax = p < 0.5;
+    const outer = wax ? 1 : 0, inner = wax ? (p < 0.25 ? 0 : 1) : (p < 0.75 ? 0 : 1);
     return 'M'+c+' '+(c-r)+' A'+r+' '+r+' 0 0 '+outer+' '+c+' '+(c+r)+' A'+rx.toFixed(2)+' '+r+' 0 0 '+inner+' '+c+' '+(c-r)+'Z';
   }
-
-  // Zonsopkomst en -ondergang (zelfde methode als SunCalc)
   function sunTimes(date, lat, lng){
     const rad = Math.PI/180, J1970 = 2440588, J2000 = 2451545, e = rad*23.4397;
-    const noonLocal = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12);
-    const d = noonLocal.valueOf()/DAY - 0.5 + J1970 - J2000;
-    const lw = rad * -lng, phi = rad * lat;
-    const n = Math.round(d - 0.0009 - lw/(2*Math.PI));
-    const ds = 0.0009 + lw/(2*Math.PI) + n;
-    const M = rad*(357.5291 + 0.98560028*ds);
-    const C = rad*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M));
-    const L = M + C + rad*102.9372 + Math.PI;
-    const dec = Math.asin(Math.sin(L)*Math.sin(e));
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12).valueOf()/DAY - 0.5 + J1970 - J2000;
+    const lw = rad*-lng, phi = rad*lat, n = Math.round(d - 0.0009 - lw/(2*Math.PI)), ds = 0.0009 + lw/(2*Math.PI) + n;
+    const M = rad*(357.5291 + 0.98560028*ds), C = rad*(1.9148*Math.sin(M) + 0.02*Math.sin(2*M) + 0.0003*Math.sin(3*M));
+    const L = M + C + rad*102.9372 + Math.PI, dec = Math.asin(Math.sin(L)*Math.sin(e));
     const Jnoon = J2000 + ds + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
     const cosw = (Math.sin(rad*-0.833) - Math.sin(phi)*Math.sin(dec)) / (Math.cos(phi)*Math.cos(dec));
-    const fromJ = j => new Date((j + 0.5 - J1970) * DAY);
-    if(cosw > 1) return {polar:'night'};
-    if(cosw < -1) return {polar:'day'};
-    const w = Math.acos(cosw);
-    const Jset = J2000 + 0.0009 + (w + lw)/(2*Math.PI) + n + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
-    const Jrise = Jnoon - (Jset - Jnoon);
-    return {rise:fromJ(Jrise), set:fromJ(Jset)};
+    const fromJ = j => new Date((j + 0.5 - J1970)*DAY);
+    if(cosw > 1) return {polar:'night'}; if(cosw < -1) return {polar:'day'};
+    const Jset = J2000 + 0.0009 + (Math.acos(cosw) + lw)/(2*Math.PI) + n + 0.0053*Math.sin(M) - 0.0069*Math.sin(2*L);
+    return {rise:fromJ(Jnoon - (Jset - Jnoon)), set:fromJ(Jset)};
   }
-
   function easter(y){
-    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
-      g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
-      l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
-      mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
     return new Date(y,mo-1,da);
   }
-  function nthSunday(y, month, n){
-    const first = new Date(y, month, 1);
-    return new Date(y, month, 1 + ((7 - first.getDay()) % 7) + 7*(n-1));
-  }
-  const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const nthSunday = (y,mo,n) => { const f = new Date(y,mo,1); return new Date(y,mo,1 + ((7 - f.getDay()) % 7) + 7*(n-1)); };
   function eventsFor(y){
-    const e = easter(y);
-    let koning = new Date(y,3,27); if(koning.getDay() === 0) koning = new Date(y,3,26);
-    return [
-      ['Nieuwjaarsdag', new Date(y,0,1)],
-      ['Valentijnsdag', new Date(y,1,14)],
-      ['Pasen', e],
-      ['Koningsdag', koning],
-      ['Bevrijdingsdag', new Date(y,4,5)],
-      ['Moederdag', nthSunday(y,4,2)],
-      ['Hemelvaartsdag', addDays(e,39)],
-      ['Pinksteren', addDays(e,49)],
-      ['Vaderdag', nthSunday(y,5,3)],
-      ['Sinterklaas', new Date(y,11,5)],
-      ['Kerstmis', new Date(y,11,25)],
-      ['Oudejaarsavond', new Date(y,11,31)]
-    ];
+    const e = easter(y); let k = new Date(y,3,27); if(k.getDay() === 0) k = new Date(y,3,26);
+    return [['Nieuwjaarsdag',new Date(y,0,1)],['Valentijnsdag',new Date(y,1,14)],['Pasen',e],['Koningsdag',k],['Bevrijdingsdag',new Date(y,4,5)],['Moederdag',nthSunday(y,4,2)],['Hemelvaartsdag',addDays(e,39)],['Pinksteren',addDays(e,49)],['Vaderdag',nthSunday(y,5,3)],['Sinterklaas',new Date(y,11,5)],['Kerstmis',new Date(y,11,25)],['Oudejaarsavond',new Date(y,11,31)]];
   }
-
-  const WORLD = [['Londen','Europe/London'],['New York','America/New_York'],['Tokio','Asia/Tokyo'],['Sydney','Australia/Sydney']];
   const zoneFmt = {};
   function zoneWall(tz, now){
     if(!zoneFmt[tz]) zoneFmt[tz] = new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',hourCycle:'h23'});
-    const parts = zoneFmt[tz].formatToParts(now), g = t => Number(parts.find(p => p.type === t).value);
+    const p = zoneFmt[tz].formatToParts(now), g = t => Number(p.find(x => x.type === t).value);
     return new Date(g('year'), g('month')-1, g('day'), g('hour') % 24, g('minute'));
   }
+
+  /* ---------- dagritme ---------- */
+  const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
+  const alarmFor = d => prefs.alarms[isWeekend(d) ? 'weekend' : 'week'];
+  const wakeFor = d => { const a = alarmFor(d), m = toMin(a.time); return a.on && m != null ? m : (toMin(prefs.wake) ?? 420); };
+  const bedMin = () => toMin(prefs.bed) ?? 1350;
+  function nightInfo(now){
+    const m = now.getHours()*60 + now.getMinutes(), bed = bedMin(), today = midnight(now), wake = wakeFor(today);
+    if(bed > wake){
+      if(m >= bed){ const tm = addDays(today,1); return {night:true, start:atMin(today,bed), end:atMin(tm,wakeFor(tm))}; }
+      if(m < wake) return {night:true, start:atMin(addDays(today,-1),bed), end:atMin(today,wake)};
+      return {night:false, start:atMin(today,wake), end:atMin(today,bed)};
+    }
+    if(m >= bed && m < wake) return {night:true, start:atMin(today,bed), end:atMin(today,wake)};
+    if(m >= wake) return {night:false, start:atMin(today,wake), end:atMin(addDays(today,1),bed)};
+    const y = addDays(today,-1); return {night:false, start:atMin(y,wakeFor(y)), end:atMin(today,bed)};
+  }
+  function dayEvents(base){
+    const out = [];
+    REMS.forEach(r => { const c = prefs.rem[r.id]; if(!c || !c.on) return;
+      c.times.forEach(t => { const m = toMin(t); if(m != null) out.push({type:'rem', id:r.id, name:r.name, icon:r.icon, t, at:atMin(base,m)}); }); });
+    const a = alarmFor(base), am = toMin(a.time);
+    if(a.on && am != null) out.push({type:'alarm', name:'Wekker', icon:'bell', t:a.time, at:atMin(base,am)});
+    return out;
+  }
+  const agendaEvents = () => (prefs.agenda && prefs.agenda.items || []).map(i => ({type:'agenda', name:i.title, icon:'bell', at:new Date(i.at)}));
+  const allEvents = now => { const d = midnight(now); return [...dayEvents(addDays(d,-1)), ...dayEvents(d), ...dayEvents(addDays(d,1)), ...agendaEvents()].sort((a,b) => a.at - b.at); };
+  const remKey = ev => ev.id + '@' + dateKey(ev.at) + '@' + ev.t;
+  function nextAlarm(now){
+    const d = midnight(now);
+    for(const day of [d, addDays(d,1)]){ const a = alarmFor(day), m = toMin(a.time); if(a.on && m != null){ const at = atMin(day,m); if(at > now) return {at, day}; } }
+    return null;
+  }
+
+  /* ---------- geluid ---------- */
+  let actx = null;
+  function initAudio(){
+    try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if(actx.state === 'suspended') actx.resume(); }catch(e){}
+  }
+  function tone(freq, start, len, vol){
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + len);
+    o.connect(g); g.connect(actx.destination); o.start(start); o.stop(start + len + 0.05);
+  }
+  function chime(vol){
+    if(!actx) return; try{ const t = actx.currentTime + 0.05; tone(784, t, 0.7, vol); tone(1175, t + 0.28, 0.9, vol*0.8); }catch(e){}
+  }
+
+  /* ---------- melding op volledig scherm ---------- */
+  let alertLoop = null, alertStopAt = 0;
+  function showAlert(ic, title, text, btn){
+    $('alertIcon').innerHTML = icon(ic); $('alertTitle').textContent = title; $('alertText').textContent = text; $('alertBtn').textContent = btn || 'Stoppen';
+    $('alert').hidden = false; $('dim').style.opacity = 0;
+    clearInterval(alertLoop); let vol = 0.15; alertStopAt = Date.now() + 10*60000;
+    chime(vol);
+    alertLoop = setInterval(() => { if(Date.now() > alertStopAt){ stopAlert(); return; } vol = Math.min(0.6, vol + 0.05); chime(vol); }, 2400);
+  }
+  function stopAlert(){ clearInterval(alertLoop); alertLoop = null; $('alert').hidden = true; applyBright(); }
+  $('alertBtn').addEventListener('click', e => { e.stopPropagation(); stopAlert(); });
 
   /* ---------- formatters ---------- */
   const fWeekday = new Intl.DateTimeFormat('nl-NL',{weekday:'long'});
@@ -462,237 +654,403 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     $('hHand').setAttribute('transform','rotate('+((h + m/60)*30)+' 100 100)');
     $('mHand').setAttribute('transform','rotate('+((m + s/60)*6)+' 100 100)');
     $('sHand').setAttribute('transform','rotate('+(s*6)+' 100 100)');
+    $('secRing').setAttribute('stroke-dasharray', (prefs.seconds ? s : 0) + ' 60');
   }
-
   function drawDigital(now){
     const t = pad(now.getHours()) + pad(now.getMinutes());
-    $('digTime').innerHTML = digits(t.slice(0,2)) + '<span class="colon">:</span>' + digits(t.slice(2)) +
-      '<span class="sec"'+(prefs.seconds?'':' hidden')+'>'+digits(pad(now.getSeconds()))+'</span>';
+    $('digTime').innerHTML = digits(t.slice(0,2)) + '<span class="colon">:</span>' + digits(t.slice(2)) + '<span class="sec"'+(prefs.seconds?'':' hidden')+'>'+digits(pad(now.getSeconds()))+'</span>';
     $('digTime').setAttribute('aria-label','Het is ' + now.getHours() + ':' + pad(now.getMinutes()));
   }
-
+  let sunLine = '';
+  function drawDigitalSub(now){
+    const parts = [];
+    if(sunLine) parts.push(icon('sun') + ' ' + sunLine);
+    if(wx && wx.d && wx.d.current && wx.lat === prefs.loc.lat && wx.lng === prefs.loc.lng){
+      const c = wx.d.current, w = WMO[c.weather_code] || ['','cloud']; let k = w[1]; if(k === 'sun' && !c.is_day) k = 'moon';
+      parts.push(icon(k) + ' ' + Math.round(c.temperature_2m) + '°');
+    }
+    parts.push('Week ' + isoWeek(now));
+    const na = nextAlarm(now); if(na && na.at - now < DAY) parts.push(icon('bell') + ' ' + hm(na.at));
+    if(root.hasAttribute('data-night')) parts.push(icon('moon') + ' Nachtstand');
+    const z = ZONES.find(z => z[1] === prefs.zone2); if(z) parts.push(z[0] + ' ' + hm(zoneWall(z[1], now)));
+    $('digSub').innerHTML = parts.map(p => '<span>' + p + '</span>').join('');
+  }
   function drawCalendar(now){
-    $('calMonth').textContent = cap(fMonth.format(now));
-    $('calWeek').textContent = 'Week ' + isoWeek(now);
-    const y = now.getFullYear(), mo = now.getMonth();
-    const offset = (new Date(y,mo,1).getDay() + 6) % 7;
-    const days = new Date(y,mo+1,0).getDate();
-    let html = ['M','D','W','D','V','Z','Z'].map(w => '<span class="wd">'+w+'</span>').join('');
-    for(let i=0;i<offset;i++) html += '<span></span>';
-    for(let d=1; d<=days; d++) html += '<span class="day'+(d===now.getDate()?' today':'')+'">'+d+'</span>';
-    $('calGrid').innerHTML = html;
+    $('calMonth').textContent = cap(fMonth.format(now)); $('calWeek').textContent = 'Week ' + isoWeek(now);
+    const y = now.getFullYear(), mo = now.getMonth(), off = (new Date(y,mo,1).getDay() + 6) % 7, days = new Date(y,mo+1,0).getDate();
+    let h = ['M','D','W','D','V','Z','Z'].map(w => '<span class="wd">'+w+'</span>').join('');
+    for(let i=0;i<off;i++) h += '<span></span>';
+    for(let d=1; d<=days; d++) h += '<span class="day'+(d === now.getDate() ? ' today' : '')+'">'+d+'</span>';
+    $('calGrid').innerHTML = h;
   }
-
-  function drawSun(now){
-    const loc = prefs.loc;
-    $('sunPlace').textContent = loc.name;
-    const t = sunTimes(now, loc.lat, loc.lng);
-    const dot = $('sunDot'), lit = $('sunLit');
-    if(t.polar){
-      $('sunRise').textContent = $('sunSet').textContent = '--:--';
-      $('sunFoot').textContent = t.polar === 'day' ? 'De zon gaat vandaag niet onder' : 'De zon komt vandaag niet op';
-      $('digSun').textContent = '';
-      return;
-    }
-    $('sunRise').textContent = hm(t.rise);
-    $('sunSet').textContent = hm(t.set);
-    const len = t.set - t.rise;
-    const tm = sunTimes(addDays(now,1), loc.lat, loc.lng);
-    const diff = tm.polar ? 0 : Math.round(((tm.set - tm.rise) - len) / 60000);
-    const lh = Math.floor(len/3600000), lm = Math.round((len % 3600000)/60000);
-    $('sunFoot').textContent = lh + ' u ' + lm + ' min daglicht, morgen ' +
-      (diff === 0 ? 'even lang' : Math.abs(diff) + ' min ' + (diff > 0 ? 'langer' : 'korter'));
-
-    const p = (now - t.rise) / len;
-    if(p >= 0 && p <= 1){
-      dot.setAttribute('cx', (100 - 85*Math.cos(Math.PI*p)).toFixed(2));
-      dot.setAttribute('cy', (80 - 68*Math.sin(Math.PI*p)).toFixed(2));
-      dot.setAttribute('fill','var(--orange)'); dot.setAttribute('stroke','none');
-      lit.setAttribute('stroke-dasharray', p.toFixed(4) + ' 1');
+  function drawDayNight(now){
+    const ni = nightInfo(now);
+    $('dnTile').classList.toggle('night', ni.night);
+    $('dnDay').textContent = cap(fWeekday.format(now)); $('dnTime').textContent = hm(now);
+    $('dnIcon').innerHTML = ni.night ? MOON_BIG : SUN_BIG;
+    $('dnBar').style.width = (Math.min(1, Math.max(0, (now - ni.start)/(ni.end - ni.start)))*100).toFixed(1) + '%';
+    if(ni.night){
+      $('dnMsg').textContent = 'Het is nacht'; $('dnSub').textContent = 'Slaap lekker verder';
+      $('dnFoot').textContent = 'Opstaan om ' + hm(ni.end) + ', over ' + dur(ni.end - now);
     }else{
-      const before = p < 0;
-      dot.setAttribute('cx', before ? '15' : '185'); dot.setAttribute('cy','86');
-      dot.setAttribute('fill','var(--tile)'); dot.setAttribute('stroke','var(--soft)'); dot.setAttribute('stroke-width','1.5');
-      lit.setAttribute('stroke-dasharray', (before ? 0 : 1) + ' 1');
+      if(now - ni.start < 3600000){ $('dnMsg').textContent = 'Goedemorgen'; $('dnSub').textContent = 'Tijd om op te staan'; }
+      else { const h = now.getHours(); $('dnMsg').textContent = 'Het is ' + (h < 12 ? 'ochtend' : h < 18 ? 'middag' : 'avond'); $('dnSub').textContent = 'Bedtijd om ' + hm(ni.end); }
+      $('dnFoot').textContent = 'Nog ' + dur(ni.end - now) + ' tot bedtijd';
     }
-    if(now < t.rise) $('digSun').textContent = 'Zon op om ' + hm(t.rise);
-    else if(now < t.set) $('digSun').textContent = 'Zon onder om ' + hm(t.set);
-    else $('digSun').textContent = tm.polar ? '' : 'Morgen zon op om ' + hm(tm.rise);
   }
-
+  let events = [];
+  function drawReminders(now){
+    const on = REMS.filter(r => prefs.rem[r.id] && prefs.rem[r.id].on);
+    const today = midnight(now);
+    if(!on.length){ $('remGrid').innerHTML = '<div class="empty">Tik op het scherm en zet herinneringen aan bij de instellingen.</div>'; }
+    else $('remGrid').innerHTML = on.map(r => {
+      const evs = events.filter(e => e.type === 'rem' && e.id === r.id && e.at <= now && now - e.at < 30*60000);
+      const act = evs.find(e => !prefs.done[remKey(e)]), done = !act && evs.length;
+      const times = prefs.rem[r.id].times.filter(t => toMin(t) != null).sort();
+      const rt = act ? 'Nu, tik als het gedaan is' : done ? 'Gedaan' : (times.length ? joinNl(times) : 'Geen tijd');
+      return '<button class="rcell act'+(act?' on':'')+(done?' done':'')+'"'+(act?' data-key="'+remKey(act)+'"':' tabindex="-1"')+'>'+icon(r.icon)+'<span class="rn">'+r.name+'</span><span class="rt">'+rt+'</span></button>';
+    }).join('');
+    const doneToday = Object.values(prefs.done).filter(v => v === dateKey(today)).length;
+    $('remSub').textContent = doneToday ? doneToday + ' gedaan vandaag' : '';
+  }
+  function drawNext(now){
+    const next = events.find(e => e.at > now), prev = [...events].reverse().find(e => e.at <= now);
+    if(!next){ $('nextBox').style.visibility = 'hidden'; return; }
+    $('nextBox').style.visibility = 'visible';
+    const from = prev ? prev.at : new Date(now - (next.at - now));
+    $('nextRing').setAttribute('stroke-dasharray', Math.max(0, Math.min(1, (next.at - now)/(next.at - from))).toFixed(4) + ' 1');
+    const tomorrow = midnight(next.at) > midnight(now);
+    $('nextWhat').textContent = 'Volgende: ' + (next.type === 'agenda' ? next.name : next.name.toLowerCase()) + (tomorrow ? ' morgen' : '') + ' om ' + hm(next.at);
+    $('nextWhen').textContent = 'Over ' + dur(next.at - now);
+  }
+  function drawAlarm(now){
+    const na = nextAlarm(now), big = $('alBig');
+    big.classList.toggle('set', !!na);
+    if(na){
+      const today = midnight(na.at).getTime() === midnight(now).getTime();
+      big.innerHTML = icon('bell') + '<div><b>' + (today ? 'Vandaag' : 'Morgen') + ' om ' + hm(na.at) + '</b><small>Over ' + dur(na.at - now) + '</small></div>';
+    }else{
+      let later = null;
+      for(let i=2;i<=7 && !later;i++){ const day = addDays(midnight(now),i), a = alarmFor(day), m = toMin(a.time); if(a.on && m != null) later = atMin(day,m); }
+      big.innerHTML = icon('bell') + '<div><b>Morgen geen wekker</b><small>' + (later ? 'Volgende: ' + fWeekday.format(later) + ' om ' + hm(later) : 'Zet hieronder een wekker aan') + '</small></div>';
+    }
+    $('alSub').textContent = root.hasAttribute('data-night') ? 'Nachtstand aan' : '';
+    const rows = [['week','AL1','Maandag tot vrijdag'],['weekend','AL2','Zaterdag en zondag']];
+    $('alList').innerHTML = rows.map(([k,lab,days]) => {
+      const a = prefs.alarms[k];
+      return '<div class="row"><div class="l"><div class="n">'+lab+'</div><div class="s">'+days+'</div></div><div class="r">'+(a.time || '--:--')+'<button class="pill act" data-al="'+k+'" aria-pressed="'+a.on+'">'+(a.on?'Aan':'Uit')+'</button></div></div>';
+    }).join('');
+  }
+  function drawSun(now){
+    const loc = prefs.loc; $('sunPlace').textContent = loc.name;
+    const t = sunTimes(now, loc.lat, loc.lng), dot = $('sunDot'), lit = $('sunLit');
+    if(t.polar){ $('sunRise').textContent = $('sunSet').textContent = '--:--'; $('sunFoot').textContent = t.polar === 'day' ? 'De zon gaat vandaag niet onder' : 'De zon komt vandaag niet op'; sunLine = ''; return; }
+    $('sunRise').textContent = hm(t.rise); $('sunSet').textContent = hm(t.set);
+    const len = t.set - t.rise, tm = sunTimes(addDays(now,1), loc.lat, loc.lng);
+    const diff = tm.polar ? 0 : Math.round(((tm.set - tm.rise) - len)/60000);
+    $('sunFoot').textContent = Math.floor(len/3600000) + ' u ' + Math.round((len % 3600000)/60000) + ' min daglicht, morgen ' + (diff === 0 ? 'even lang' : Math.abs(diff) + ' min ' + (diff > 0 ? 'langer' : 'korter'));
+    const p = (now - t.rise)/len;
+    if(p >= 0 && p <= 1){
+      dot.setAttribute('cx',(100 - 85*Math.cos(Math.PI*p)).toFixed(2)); dot.setAttribute('cy',(80 - 68*Math.sin(Math.PI*p)).toFixed(2));
+      dot.setAttribute('fill','var(--orange)'); dot.setAttribute('stroke','none'); lit.setAttribute('stroke-dasharray', p.toFixed(4) + ' 1');
+    }else{
+      dot.setAttribute('cx', p < 0 ? '15' : '185'); dot.setAttribute('cy','86');
+      dot.setAttribute('fill','var(--tile)'); dot.setAttribute('stroke','var(--soft)'); dot.setAttribute('stroke-width','1.5');
+      lit.setAttribute('stroke-dasharray', (p < 0 ? 0 : 1) + ' 1');
+    }
+    sunLine = now < t.rise ? 'Zon op ' + hm(t.rise) : now < t.set ? 'Zon onder ' + hm(t.set) : (tm.polar ? '' : 'Zon op ' + hm(tm.rise));
+  }
   function drawMoon(now){
     const p = moonPhase(now);
     $('moonLit').setAttribute('d', moonPath(p));
     $('moonName').textContent = MOON_NAMES[Math.floor(p*8 + 0.5) % 8];
-    $('moonPct').textContent = Math.round((1 - Math.cos(2*Math.PI*p)) / 2 * 100) + '% verlicht';
-    const age = Math.floor(p * SYN);
-    $('moonAge').textContent = 'Dag ' + (age + 1);
-    const toFull = ((0.5 - p + 1) % 1) * SYN, toNew = ((1 - p) % 1) * SYN;
-    const say = (n, what) => {
-      const d = Math.round(n);
-      return what + (d === 0 ? ' vandaag' : d === 1 ? ' morgen' : ' over ' + d + ' dagen');
-    };
-    $('moonFoot').innerHTML = say(toFull,'Volle maan') + '<br>' + say(toNew,'Nieuwe maan');
+    $('moonPct').textContent = Math.round((1 - Math.cos(2*Math.PI*p))/2*100) + '% verlicht';
+    $('moonAge').textContent = 'Dag ' + (Math.floor(p*SYN) + 1);
+    const say = (n,w) => { const d = Math.round(n); return w + (d === 0 ? ' vandaag' : d === 1 ? ' morgen' : ' over ' + d + ' dagen'); };
+    $('moonFoot').innerHTML = say(((0.5 - p + 1) % 1)*SYN, 'Volle maan') + '<br>' + say(((1 - p) % 1)*SYN, 'Nieuwe maan');
   }
-
   function drawCountdown(now){
     const today = midnight(now), y = today.getFullYear();
-    const list = eventsFor(y).concat(eventsFor(y+1))
-      .map(([n,d]) => [n, d, Math.round((midnight(d) - today)/DAY)])
-      .filter(e => e[2] >= 0).sort((a,b) => a[2]-b[2]).slice(0,3);
-    $('countList').innerHTML = list.map(([n,d,days]) =>
-      '<div class="row"><div class="l"><div class="n">'+n+'</div><div class="s">'+cap(fShort.format(d))+'</div></div>'+
-      '<div class="r">'+(days === 0 ? 'Vandaag' : days === 1 ? 'Morgen' : days+'<small>dagen</small>')+'</div></div>'
-    ).join('');
-    const start = new Date(y,0,1), end = new Date(y+1,0,1);
-    $('yearPct').textContent = y + ' is ' + Math.floor((now - start)/(end - start)*100) + '% voorbij';
+    const list = eventsFor(y).concat(eventsFor(y+1)).map(([n,d]) => [n,d,Math.round((midnight(d) - today)/DAY)]).filter(e => e[2] >= 0).sort((a,b) => a[2]-b[2]).slice(0,3);
+    $('countList').innerHTML = list.map(([n,d,days]) => '<div class="row"><div class="l"><div class="n">'+n+'</div><div class="s">'+cap(fShort.format(d))+'</div></div><div class="r">'+(days === 0 ? 'Vandaag' : days === 1 ? 'Morgen' : days + '<small>dagen</small>')+'</div></div>').join('');
+    $('yearPct').textContent = y + ' is ' + Math.floor((now - new Date(y,0,1))/(new Date(y+1,0,1) - new Date(y,0,1))*100) + '% voorbij';
   }
-
   function drawWorld(now){
     const local = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
     $('worldList').innerHTML = WORLD.map(([city,tz]) => {
-      const w = zoneWall(tz, now);
-      const dd = Math.round((midnight(w) - midnight(local))/DAY);
-      const day = dd === 0 ? 'Vandaag' : dd > 0 ? 'Morgen' : 'Gisteren';
-      const h = Math.round((w - local)/1800000)/2;
+      const w = zoneWall(tz, now), dd = Math.round((midnight(w) - midnight(local))/DAY), h = Math.round((w - local)/1800000)/2;
       const off = h === 0 ? 'zelfde tijd' : (h > 0 ? '+' : '−') + String(Math.abs(h)).replace('.',',') + ' u';
-      return '<div class="row"><div class="l"><div class="n">'+city+'</div><div class="s">'+day+', '+off+'</div></div>'+
-             '<div class="r">'+hm(w)+'</div></div>';
+      return '<div class="row"><div class="l"><div class="n">'+city+'</div><div class="s">'+(dd === 0 ? 'Vandaag' : dd > 0 ? 'Morgen' : 'Gisteren')+', '+off+'</div></div><div class="r">'+hm(w)+'</div></div>';
     }).join('');
+  }
+
+  /* ---------- weer ---------- */
+  const WMO = {0:['Helder','sun'],1:['Overwegend helder','sun'],2:['Half bewolkt','partly'],3:['Bewolkt','cloud'],45:['Mist','fog'],48:['Mist met rijp','fog'],
+    51:['Lichte motregen','rain'],53:['Motregen','rain'],55:['Dichte motregen','rain'],56:['IJzel','rain'],57:['IJzel','rain'],61:['Lichte regen','rain'],63:['Regen','rain'],65:['Zware regen','rain'],
+    66:['IJzel','rain'],67:['Zware ijzel','rain'],71:['Lichte sneeuw','snow'],73:['Sneeuw','snow'],75:['Zware sneeuw','snow'],77:['Sneeuwkorrels','snow'],
+    80:['Lichte buien','rain'],81:['Buien','rain'],82:['Zware buien','rain'],85:['Sneeuwbuien','snow'],86:['Zware sneeuwbuien','snow'],95:['Onweer','thunder'],96:['Onweer met hagel','thunder'],99:['Onweer met hagel','thunder']};
+  let wx = null, wxErr = '';
+  try{ wx = JSON.parse(localStorage.getItem('nachtklok-weer') || 'null'); }catch(e){}
+  async function loadWeather(force){
+    const loc = prefs.loc;
+    if(!force && wx && wx.lat === loc.lat && wx.lng === loc.lng && Date.now() - wx.at < 15*60000){ drawWeather(); return; }
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat.toFixed(3) + '&longitude=' + loc.lng.toFixed(3) +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation,weather_code,wind_speed_10m,pressure_msl,is_day' +
+      '&hourly=pressure_msl&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&past_days=1&forecast_days=2';
+    const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 10000);
+    try{
+      const r = await fetch(url, {signal:ctrl.signal}); if(!r.ok) throw new Error(r.status);
+      wx = {at:Date.now(), lat:loc.lat, lng:loc.lng, d:await r.json()}; wxErr = '';
+      try{ localStorage.setItem('nachtklok-weer', JSON.stringify(wx)); }catch(e){}
+    }catch(e){ wxErr = navigator.onLine === false ? 'Geen internet' : 'Het weer kon niet worden geladen'; }
+    clearTimeout(to); drawWeather(); drawDigitalSub(new Date());
+  }
+  function drawWeather(){
+    $('wxPlace').textContent = prefs.loc.name;
+    if(!wx || !wx.d || !wx.d.current || wx.lat !== prefs.loc.lat || wx.lng !== prefs.loc.lng){
+      $('wxIcon').innerHTML = icon('cloud'); $('wxTemp').textContent = '--°'; $('wxDesc').textContent = wxErr || 'Weer laden…';
+      $('wxGrid').innerHTML = ''; $('wxFoot').textContent = wxErr ? 'Het weer werkt alleen op je eigen site met internet.' : ''; return;
+    }
+    const d = wx.d, c = d.current, w = WMO[c.weather_code] || ['Onbekend','cloud'];
+    let k = w[1]; if(k === 'sun' && !c.is_day) k = 'moon';
+    $('wxIcon').innerHTML = icon(k); $('wxIcon').dataset.k = k;
+    $('wxTemp').textContent = Math.round(c.temperature_2m) + '°';
+    const t = c.temperature_2m, dew = c.dew_point_2m;
+    const warn = t <= 1 && (c.precipitation > 0 || t - dew <= 1) ? 'kans op gladheid' : t <= 0 ? 'het vriest' : '';
+    $('wxDesc').innerHTML = esc(w[0]) + (warn ? ', <b>' + warn + '</b>' : '');
+    const today = c.time.slice(0,10), di = d.daily.time.indexOf(today);
+    const hi = d.hourly.time.indexOf(c.time.slice(0,13) + ':00');
+    let trend = '→', trendTxt = 'gelijk';
+    if(hi >= 3){ const diff = d.hourly.pressure_msl[hi] - d.hourly.pressure_msl[hi-3]; if(diff > 1){ trend = '↑'; trendTxt = 'stijgend, beter weer'; } else if(diff < -1){ trend = '↓'; trendTxt = 'dalend, slechter weer'; } }
+    const rain = di >= 0 ? d.daily.precipitation_probability_max[di] : null;
+    $('wxGrid').innerHTML = [['Gevoel', Math.round(c.apparent_temperature) + '°'], ['Regenkans', rain == null ? '--' : rain + '%'], ['Wind', Math.round(c.wind_speed_10m) + ' km/u'], ['Luchtdruk', trend + ' ' + Math.round(c.pressure_msl)]]
+      .map(([l,v]) => '<div><small>'+l+'</small><b>'+v+'</b></div>').join('');
+    const mm = di >= 0 ? 'Vandaag ' + Math.round(d.daily.temperature_2m_min[di]) + '° tot ' + Math.round(d.daily.temperature_2m_max[di]) + '°, ' : '';
+    $('wxFoot').innerHTML = esc(mm + 'dauwpunt ' + Math.round(dew) + '°, luchtdruk ' + trendTxt) + '<br>' +
+      (wxErr ? 'Geen verbinding, gegevens van ' : 'Bijgewerkt om ') + hm(new Date(wx.at));
+  }
+
+  /* ---------- agenda (via de app Opdrachten) ---------- */
+  function parseAgenda(raw){
+    return raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+      let m = l.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2})[:.](\d{2})\s+(.+)$/);
+      if(m) return {at:new Date(+m[1], m[2]-1, +m[3], +m[4], +m[5]).getTime(), title:m[6].slice(0,80)};
+      m = l.match(/^(\d{1,2})[:.](\d{2})\s+(.+)$/);
+      if(m){ const t = new Date(); return {at:new Date(t.getFullYear(), t.getMonth(), t.getDate(), +m[1], +m[2]).getTime(), title:m[3].slice(0,80)}; }
+      return null;
+    }).filter(Boolean).sort((a,b) => a.at - b.at).slice(0,40);
+  }
+  function readUrl(){
+    let q; try{ q = new URLSearchParams(location.search); }catch(e){ return false; }
+    if(q.has('agenda') || q.has('batterij')){
+      let b = parseFloat(String(q.get('batterij') || '').replace(',','.'));
+      if(!isNaN(b) && b <= 1) b = b*100;
+      prefs.agenda = {at:Date.now(), items:parseAgenda(q.get('agenda') || ''), battery:isNaN(b) ? null : Math.round(b)};
+      savePrefs();
+    }
+    const auto = q.get('lader') === '1';
+    if(location.search){ try{ history.replaceState(null, '', location.pathname + location.hash); }catch(e){} }
+    return auto;
+  }
+  function drawAgenda(now){
+    const a = prefs.agenda;
+    if(!a){ $('agList').innerHTML = '<div class="empty">Nog geen agenda ontvangen. Stel de opdracht Nachtklok in via de app Opdrachten.</div>'; $('agSub').textContent = ''; $('agFoot').textContent = ''; return; }
+    const got = new Date(a.at), today = midnight(now);
+    $('agSub').textContent = 'Bijgewerkt ' + (midnight(got).getTime() === today.getTime() ? 'om ' : fShort.format(got) + ' ') + hm(got);
+    const items = (a.items || []).filter(i => i.at >= now - 30*60000 && i.at < addDays(today,2).getTime()).slice(0,4);
+    if(!items.length) $('agList').innerHTML = '<div class="empty">Geen afspraken meer vandaag en morgen.</div>';
+    else $('agList').innerHTML = items.map(i => {
+      const d = new Date(i.at), dd = Math.round((midnight(d) - today)/DAY);
+      const when = i.at <= now.getTime() ? 'Nu bezig' : dd === 0 ? 'Vandaag, over ' + dur(i.at - now) : 'Morgen';
+      return '<div class="row"><div class="l"><div class="n">'+esc(i.title)+'</div><div class="s">'+when+'</div></div><div class="r">'+hm(d)+'</div></div>';
+    }).join('');
+    $('agFoot').textContent = a.battery != null ? 'Batterij ' + a.battery + '% toen de lader erin ging om ' + hm(got) : '';
+  }
+
+  /* ---------- timer ---------- */
+  const tm = {dur:0, end:0, remain:0, running:false};
+  function tmStart(min){ initAudio(); tm.dur = min*60000; tm.end = Date.now() + tm.dur; tm.remain = 0; tm.running = true; drawTimer(); }
+  function tmToggle(){
+    if(!tm.dur) return;
+    if(tm.running){ tm.remain = tm.end - Date.now(); tm.running = false; } else { tm.end = Date.now() + (tm.remain || tm.dur); tm.running = true; }
+    drawTimer();
+  }
+  function tmStop(){ tm.dur = 0; tm.running = false; tm.remain = 0; drawTimer(); }
+  function drawTimer(){
+    let left = !tm.dur ? 0 : tm.running ? tm.end - Date.now() : (tm.remain || tm.dur);
+    if(tm.dur && tm.running && left <= 0){ tmStop(); showAlert('timer','Tijd is om','De timer is afgelopen','Oké'); return; }
+    const frac = tm.dur ? Math.max(0,left)/tm.dur : 0;
+    const arc = $('tmArc'); arc.setAttribute('stroke-dasharray', frac.toFixed(4) + ' 1');
+    arc.setAttribute('data-level', frac > 0.25 ? 'ok' : frac > 0.1 ? 'mid' : 'end');
+    const s = Math.ceil(Math.max(0,left)/1000), h = Math.floor(s/3600), m = Math.floor((s % 3600)/60), sec = s % 60;
+    $('tmText').textContent = h ? h + ':' + pad(m) + ':' + pad(sec) : m + ':' + pad(sec);
+    $('tmState').textContent = !tm.dur ? 'Kies een tijd' : tm.running ? 'Loopt' : 'Gepauzeerd, tik om verder te gaan';
+  }
+  document.querySelectorAll('.chip[data-min]').forEach(b => b.addEventListener('click', () => tmStart(Number(b.dataset.min))));
+  $('tmRing').addEventListener('click', tmToggle);
+  $('tmStop').addEventListener('click', tmStop);
+
+  /* ---------- meldingen controleren ---------- */
+  function checkTriggers(now){
+    const minute = Math.floor(now.getTime()/60000);
+    events.filter(e => Math.floor(e.at.getTime()/60000) === minute).forEach(e => {
+      if(e.type === 'alarm') showAlert('bell', 'Goedemorgen', 'Het is ' + hm(now) + '. Tijd om op te staan.', 'Stoppen');
+      else if(prefs.remSound) chime(e.type === 'agenda' ? 0.22 : 0.3);
+    });
   }
 
   let lastMinute = -1;
   function render(){
     const now = new Date();
-    drawAnalog(now);
-    drawDigital(now);
+    drawAnalog(now); drawDigital(now); drawTimer();
     if(now.getMinutes() !== lastMinute){
+      const first = lastMinute === -1;
       lastMinute = now.getMinutes();
-      $('digDate').textContent = cap(fWeekday.format(now)) + ' ' + fDayMonth.format(now);
-      $('digWeek').textContent = 'Week ' + isoWeek(now);
-      drawCalendar(now); drawSun(now); drawMoon(now); drawCountdown(now); drawWorld(now);
+      events = allEvents(now);
       applyNight(now);
+      $('digDate').textContent = cap(fWeekday.format(now)) + ' ' + fDayMonth.format(now);
+      drawCalendar(now); drawSun(now); drawMoon(now); drawCountdown(now); drawWorld(now);
+      drawDayNight(now); drawReminders(now); drawAlarm(now); drawAgenda(now); drawWeather(); drawDigitalSub(now);
+      if(!first && started) checkTriggers(now);
     }
+    drawNext(now);
   }
+  const refresh = () => { lastMinute = -1; render(); };
   function tick(){ render(); setTimeout(tick, 1000 - (Date.now() % 1000) + 10); }
 
-  /* ---------- weergave-instellingen ---------- */
+  /* ---------- weergave ---------- */
   function applyNight(now){
-    const h = (now || new Date()).getHours();
-    const on = prefs.night === 'on' || (prefs.night === 'auto' && (h >= 22 || h < 7));
+    const on = prefs.night === 'on' || (prefs.night === 'auto' && nightInfo(now || new Date()).night);
     if(on) root.setAttribute('data-night','on'); else root.removeAttribute('data-night');
+    applyBright();
   }
   function applyColor(){ if(prefs.color === 'ink') root.removeAttribute('data-color'); else root.setAttribute('data-color', prefs.color); }
-  function applyBright(){ $('dim').style.opacity = ((100 - prefs.bright)/100*0.85).toFixed(3); }
+  function applyBright(){
+    if(!$('alert').hidden) return;
+    const v = root.hasAttribute('data-night') ? prefs.brightNight : prefs.bright;
+    $('dim').style.opacity = ((100 - v)/100*0.85).toFixed(3);
+  }
 
+  /* ---------- instellingen ---------- */
+  $('remSets').innerHTML = REMS.map(r => '<div class="set col"><div class="set-top"><span>'+icon(r.icon)+' '+r.name+'</span><button class="toggle" data-rem="'+r.id+'">Aan</button></div><div class="times">'+[0,1,2].map(i => '<input type="time" data-rem="'+r.id+'" data-i="'+i+'" aria-label="'+r.name+', tijd '+(i+1)+'">').join('')+'</div></div>').join('');
+  $('zoneSel').innerHTML = '<option value="">Uit</option>' + ZONES.map(z => '<option value="'+z[1]+'">'+z[0]+'</option>').join('');
   const sel = $('citySel');
   function fillCities(){
-    let html = CITIES.map(c => '<option value="'+c[0]+'">'+c[0]+'</option>').join('');
-    if(!CITIES.some(c => c[0] === prefs.loc.name)) html = '<option value="__mine">'+prefs.loc.name+'</option>' + html;
-    sel.innerHTML = html;
-    sel.value = CITIES.some(c => c[0] === prefs.loc.name) ? prefs.loc.name : '__mine';
+    const known = CITIES.some(c => c[0] === prefs.loc.name);
+    sel.innerHTML = (known ? '' : '<option value="__mine">'+prefs.loc.name+'</option>') + CITIES.map(c => '<option value="'+c[0]+'">'+c[0]+'</option>').join('');
+    sel.value = known ? prefs.loc.name : '__mine';
   }
+  const setToggle = (el, on) => { el.setAttribute('aria-pressed', String(on)); el.textContent = on ? 'Aan' : 'Uit'; };
   function syncControls(){
     document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.night === prefs.night)));
     document.querySelectorAll('.swatches button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.color === prefs.color)));
-    $('secToggle').setAttribute('aria-pressed', String(prefs.seconds));
-    $('secToggle').textContent = prefs.seconds ? 'Aan' : 'Uit';
-    $('bright').value = prefs.bright;
-    fillCities();
+    setToggle($('secToggle'), prefs.seconds); setToggle($('remSound'), prefs.remSound);
+    $('bright').value = prefs.bright; $('brightNight').value = prefs.brightNight;
+    $('zoneSel').value = prefs.zone2; fillCities();
+    $('wakeT').value = prefs.wake; $('bedT').value = prefs.bed;
+    $('alWeekT').value = prefs.alarms.week.time; $('alWkndT').value = prefs.alarms.weekend.time;
+    document.querySelectorAll('.panel [data-al]').forEach(b => setToggle(b, prefs.alarms[b.dataset.al].on));
+    REMS.forEach(r => {
+      setToggle(document.querySelector('.toggle[data-rem="'+r.id+'"]'), prefs.rem[r.id].on);
+      document.querySelectorAll('input[data-rem="'+r.id+'"]').forEach(inp => { inp.value = prefs.rem[r.id].times[Number(inp.dataset.i)] || ''; });
+    });
   }
   const note = t => { $('note').textContent = t; };
+  const changed = () => { savePrefs(); syncControls(); refresh(); };
+
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { prefs.night = b.dataset.night; changed(); }));
+  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => { prefs.color = b.dataset.color; applyColor(); changed(); }));
+  $('secToggle').addEventListener('click', () => { prefs.seconds = !prefs.seconds; changed(); });
+  $('remSound').addEventListener('click', () => { prefs.remSound = !prefs.remSound; initAudio(); if(prefs.remSound) chime(0.3); changed(); });
+  $('bright').addEventListener('input', e => { prefs.bright = Number(e.target.value); savePrefs(); applyBright(); });
+  $('brightNight').addEventListener('input', e => { prefs.brightNight = Number(e.target.value); savePrefs(); applyBright(); });
+  $('zoneSel').addEventListener('change', e => { prefs.zone2 = e.target.value; changed(); });
+  $('wakeT').addEventListener('change', e => { if(toMin(e.target.value) != null){ prefs.wake = e.target.value; changed(); } });
+  $('bedT').addEventListener('change', e => { if(toMin(e.target.value) != null){ prefs.bed = e.target.value; changed(); } });
+  $('alWeekT').addEventListener('change', e => { if(toMin(e.target.value) != null){ prefs.alarms.week.time = e.target.value; changed(); } });
+  $('alWkndT').addEventListener('change', e => { if(toMin(e.target.value) != null){ prefs.alarms.weekend.time = e.target.value; changed(); } });
+  function toggleAlarm(k){ initAudio(); prefs.alarms[k].on = !prefs.alarms[k].on; changed(); }
+  document.querySelectorAll('.panel [data-al]').forEach(b => b.addEventListener('click', () => toggleAlarm(b.dataset.al)));
+  $('alList').addEventListener('click', e => { const b = e.target.closest('[data-al]'); if(b) toggleAlarm(b.dataset.al); });
+  document.querySelectorAll('.toggle[data-rem]').forEach(b => b.addEventListener('click', () => { const c = prefs.rem[b.dataset.rem]; c.on = !c.on; changed(); }));
+  document.querySelectorAll('input[data-rem]').forEach(inp => inp.addEventListener('change', () => {
+    const v = inp.value; prefs.rem[inp.dataset.rem].times[Number(inp.dataset.i)] = toMin(v) != null ? v : ''; changed();
+  }));
+  $('remGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-key]'); if(!b) return;
+    const today = dateKey(new Date());
+    prefs.done[b.dataset.key] = today;
+    Object.keys(prefs.done).forEach(k => { if(prefs.done[k] !== today && prefs.done[k] !== dateKey(addDays(new Date(),-1))) delete prefs.done[k]; });
+    savePrefs(); refresh();
+  });
+  sel.addEventListener('change', () => { const c = CITIES.find(c => c[0] === sel.value); if(c){ prefs.loc = {name:c[0], lat:c[1], lng:c[2]}; changed(); loadWeather(true); } });
+  $('locBtn').addEventListener('click', () => {
+    if(!navigator.geolocation){ note('Je locatie is hier niet beschikbaar. Kies een stad.'); return; }
+    note('Locatie zoeken…');
+    navigator.geolocation.getCurrentPosition(pos => {
+      prefs.loc = {name:'Mijn locatie', lat:Math.round(pos.coords.latitude*1000)/1000, lng:Math.round(pos.coords.longitude*1000)/1000}; changed(); loadWeather(true); note('De zonnetijden gelden nu voor je eigen locatie.');
+    }, () => note('Geen toegang tot je locatie. Kies een stad uit de lijst.'), {timeout:10000, maximumAge:3600000});
+  });
 
   /* ---------- scherm aanhouden ---------- */
-  let lock = null, started = false;
+  let lock = null, started = false, needTap = false, lockState = 'off';
   function setState(state){
+    lockState = state;
     $('state').classList.toggle('on', state === 'on');
     $('stateText').textContent = state === 'on' ? 'Blijft aan' : state === 'unsupported' ? 'Niet ondersteund' : 'Kan uitgaan';
-    $('warn').hidden = !started || state === 'on';
-    $('warn').textContent = state === 'unsupported'
-      ? 'Deze browser kan het scherm niet aanhouden. Open de pagina in Safari.'
-      : 'Tik om het scherm aan te houden';
+    $('warn').hidden = !started || (state === 'on' && !needTap);
+    $('warn').textContent = state === 'unsupported' ? 'Deze browser kan het scherm niet aanhouden. Open de pagina in Safari.' : state === 'on' ? 'Tik één keer om het geluid aan te zetten' : 'Tik om het scherm aan te houden';
   }
   async function keepAwake(){
     if(!('wakeLock' in navigator)){ setState('unsupported'); return; }
-    try{
-      lock = await navigator.wakeLock.request('screen');
-      setState('on');
-      lock.addEventListener('release', () => { lock = null; setState('off'); });
-    }catch(e){ lock = null; setState('off'); }
+    try{ lock = await navigator.wakeLock.request('screen'); setState('on'); lock.addEventListener('release', () => { lock = null; setState('off'); }); }
+    catch(e){ lock = null; setState('off'); }
   }
-  document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible' && started){
-      lastMinute = -1; render();
-      if(!lock) keepAwake();
-    }
-  });
-  function start(){ started = true; $('start').hidden = true; keepAwake(); }
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ loadWeather(); if(started){ refresh(); if(!lock) keepAwake(); } } });
+  function start(){ started = true; $('start').hidden = true; initAudio(); keepAwake(); }
   $('start').addEventListener('click', start);
   $('start').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); start(); } });
 
-  /* ---------- pagina's en puntjes ---------- */
+  /* ---------- pagina's ---------- */
   const pager = $('pager'), count = pager.children.length;
   $('dots').innerHTML = Array.from({length:count}, (_,i) => '<button aria-label="Pagina '+(i+1)+'"></button>').join('');
   const dotEls = [...$('dots').children];
-  const curIdx = () => Math.max(0, Math.min(count-1, Math.round(pager.scrollLeft / pager.clientWidth) || 0));
-  function updateDots(){ const i = curIdx(); dotEls.forEach((d,j) => d.setAttribute('aria-current', String(i === j))); }
-  function goTo(i, smooth){
-    i = Math.max(0, Math.min(count-1, i));
-    pager.scrollTo({left:i*pager.clientWidth, behavior: smooth ? 'smooth' : 'auto'});
-  }
+  const curIdx = () => Math.max(0, Math.min(count-1, Math.round(pager.scrollLeft/pager.clientWidth) || 0));
+  const updateDots = () => { const i = curIdx(); dotEls.forEach((d,j) => d.setAttribute('aria-current', String(i === j))); };
+  const goTo = (i, smooth) => pager.scrollTo({left:Math.max(0, Math.min(count-1, i))*pager.clientWidth, behavior: smooth ? 'smooth' : 'auto'});
   let scrollT;
-  pager.addEventListener('scroll', () => {
-    updateDots(); clearTimeout(scrollT);
-    scrollT = setTimeout(() => { prefs.page = curIdx(); savePrefs(); }, 250);
-  }, {passive:true});
+  pager.addEventListener('scroll', () => { updateDots(); clearTimeout(scrollT); scrollT = setTimeout(() => { prefs.page = curIdx(); savePrefs(); }, 250); }, {passive:true});
   window.addEventListener('resize', () => { goTo(prefs.page, false); updateDots(); });
-  dotEls.forEach((d,i) => d.addEventListener('click', e => { e.stopPropagation(); goTo(i, true); }));
+  dotEls.forEach((d,i) => d.addEventListener('click', () => goTo(i, true)));
   document.addEventListener('keydown', e => {
     if(e.target.closest && e.target.closest('.panel')) return;
     if(e.key === 'ArrowRight') goTo(curIdx()+1, true);
     if(e.key === 'ArrowLeft') goTo(curIdx()-1, true);
   });
 
-  /* ---------- instellingenpaneel ---------- */
+  /* ---------- paneel openen en sluiten ---------- */
   let hideTimer = null;
   const panel = $('panel');
-  function openPanel(){
-    panel.classList.add('open'); clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => panel.classList.remove('open'), 8000);
-  }
+  const bump = () => { clearTimeout(hideTimer); hideTimer = setTimeout(closePanel, 30000); };
+  const openPanel = () => { panel.classList.add('open'); bump(); };
+  const closePanel = () => { panel.classList.remove('open'); clearTimeout(hideTimer); };
+  $('closeP').addEventListener('click', e => { e.stopPropagation(); closePanel(); });
+  ['input','change','scroll'].forEach(ev => panel.addEventListener(ev, bump, {passive:true}));
   document.addEventListener('click', e => {
-    if(!started || e.target.closest('#start') || e.target.closest('#dots')) return;
-    if(panel.contains(e.target)){ openPanel(); return; }
+    initAudio();
+    if(needTap){ needTap = false; setState(lockState); }
+    if(!started || e.target.closest('#start') || e.target.closest('#dots') || e.target.closest('#alert')) return;
     if(!lock) keepAwake();
-    if(panel.classList.contains('open')){ panel.classList.remove('open'); clearTimeout(hideTimer); }
-    else openPanel();
-  });
-  panel.addEventListener('input', openPanel);
-  panel.addEventListener('change', openPanel);
-
-  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
-    prefs.night = b.dataset.night; savePrefs(); syncControls(); applyNight();
-  }));
-  document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => {
-    prefs.color = b.dataset.color; savePrefs(); syncControls(); applyColor();
-  }));
-  $('secToggle').addEventListener('click', () => { prefs.seconds = !prefs.seconds; savePrefs(); syncControls(); render(); });
-  $('bright').addEventListener('input', e => { prefs.bright = Number(e.target.value); savePrefs(); applyBright(); });
-  sel.addEventListener('change', () => {
-    const c = CITIES.find(c => c[0] === sel.value);
-    if(c){ prefs.loc = {name:c[0], lat:c[1], lng:c[2]}; savePrefs(); fillCities(); lastMinute = -1; render(); note(''); }
-  });
-  $('locBtn').addEventListener('click', () => {
-    if(!navigator.geolocation){ note('Je locatie is hier niet beschikbaar. Kies een stad.'); return; }
-    note('Locatie zoeken…');
-    navigator.geolocation.getCurrentPosition(pos => {
-      prefs.loc = {name:'Mijn locatie', lat:pos.coords.latitude, lng:pos.coords.longitude};
-      savePrefs(); fillCities(); lastMinute = -1; render(); note('Zonnetijden gelden nu voor je eigen locatie.');
-    }, () => note('Geen toegang tot je locatie. Kies een stad uit de lijst.'), {timeout:10000, maximumAge:3600000});
+    if(panel.contains(e.target)){ bump(); return; }
+    if(e.target.closest('.act')) return;
+    if(panel.classList.contains('open')) closePanel(); else openPanel();
   });
 
   /* ---------- starten ---------- */
-  syncControls(); applyBright(); applyColor(); applyNight(); tick(); setState('off');
+  const autoStart = readUrl();
+  syncControls(); applyColor(); tick(); setState('off');
+  loadWeather(); setInterval(loadWeather, 15*60000);
+  if(autoStart){ started = true; needTap = true; $('start').hidden = true; setState('off'); keepAwake(); }
   requestAnimationFrame(() => { goTo(prefs.page, false); updateDots(); });
 })();
 </script>
