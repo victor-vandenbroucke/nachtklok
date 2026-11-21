@@ -163,7 +163,9 @@ body{
 
 /* agenda */
 .agenda .head .t{color:var(--red)}
-.ag-list .row{flex:1 1 0; max-height:24%}
+.ag-list .row{flex:1 1 0; max-height:20%}
+.ag-list .n{font-size:5.6cqh}
+.ag-list .s{font-size:4.2cqh}
 .ag-list .r{font-size:7.4cqh}
 
 /* zon */
@@ -831,14 +833,27 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   }
 
   /* ---------- agenda (via de app Opdrachten) ---------- */
+  // Leest elke regel als "datum tijd titel", in vrijwel elke notatie die de app Opdrachten gebruikt
+  const MONTHS = {jan:0,feb:1,mrt:2,maa:2,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,dec:11};
+  function parseLine(l){
+    const now = new Date(); let y = now.getFullYear(), mo = now.getMonth(), d = now.getDate(), m, rest = l;
+    const take = re => { const r = rest.match(re); if(r) rest = rest.slice(0, r.index) + ' ' + rest.slice(r.index + r[0].length); return r; };
+    if((m = take(/(\d{4})-(\d{1,2})-(\d{1,2})/))){ y = +m[1]; mo = m[2]-1; d = +m[3]; }
+    else if((m = take(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){ d = +m[1]; mo = m[2]-1; y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; }
+    else if((m = take(/(\d{1,2})\s+(jan|feb|mrt|maa|mar|apr|mei|may|jun|jul|aug|sep|okt|oct|nov|dec)[a-z]*\.?(?:\s+(\d{4}))?/i))){ d = +m[1]; mo = MONTHS[m[2].toLowerCase()]; if(m[3]) y = +m[3]; }
+    else if((m = take(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}),?(?:\s+(\d{4}))?/i))){ mo = MONTHS[m[1].toLowerCase()]; d = +m[2]; if(m[3]) y = +m[3]; }
+    else if((m = take(/\b(morgen|tomorrow)\b/i))){ const t = addDays(now,1); y = t.getFullYear(); mo = t.getMonth(); d = t.getDate(); }
+    else take(/\b(vandaag|today)\b/i);
+    const t = rest.match(/(\d{1,2})[:.](\d{2})(?:\s*([ap])\.?\s?m\.?)?/i);
+    if(!t) return null;
+    let h = +t[1]; if(t[3]){ const pm = t[3].toLowerCase() === 'p'; if(pm && h < 12) h += 12; if(!pm && h === 12) h = 0; }
+    let title = rest.slice(t.index + t[0].length).trim() || rest.slice(0, t.index).trim();
+    title = title.replace(/^(om|at|-|–|,|:)\s*/i, '').replace(/^(om|at)\s+/i, '').trim();
+    if(!title) return null;
+    return {at:new Date(y, mo, d, h, +t[2]).getTime(), title:title.slice(0,80)};
+  }
   function parseAgenda(raw){
-    return raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
-      let m = l.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2})[:.](\d{2})\s+(.+)$/);
-      if(m) return {at:new Date(+m[1], m[2]-1, +m[3], +m[4], +m[5]).getTime(), title:m[6].slice(0,80)};
-      m = l.match(/^(\d{1,2})[:.](\d{2})\s+(.+)$/);
-      if(m){ const t = new Date(); return {at:new Date(t.getFullYear(), t.getMonth(), t.getDate(), +m[1], +m[2]).getTime(), title:m[3].slice(0,80)}; }
-      return null;
-    }).filter(Boolean).sort((a,b) => a.at - b.at).slice(0,40);
+    return raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(parseLine).filter(Boolean).sort((a,b) => a.at - b.at).slice(0,120);
   }
   function readUrl(){
     let q; try{ q = new URLSearchParams(location.search); }catch(e){ return false; }
@@ -857,14 +872,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
     if(!a){ $('agList').innerHTML = '<div class="empty">Nog geen agenda ontvangen. Stel de opdracht Nachtklok in via de app Opdrachten.</div>'; $('agSub').textContent = ''; $('agFoot').textContent = ''; return; }
     const got = new Date(a.at), today = midnight(now);
     $('agSub').textContent = 'Bijgewerkt ' + (midnight(got).getTime() === today.getTime() ? 'om ' : fShort.format(got) + ' ') + hm(got);
-    const items = (a.items || []).filter(i => i.at >= now - 30*60000 && i.at < addDays(today,2).getTime()).slice(0,4);
-    if(!items.length) $('agList').innerHTML = '<div class="empty">Geen afspraken meer vandaag en morgen.</div>';
+    const upcoming = (a.items || []).filter(i => i.at >= now - 30*60000 && i.at < addDays(today,8).getTime());
+    const items = upcoming.slice(0,5);
+    if(!items.length) $('agList').innerHTML = '<div class="empty">Geen afspraken de komende week.</div>';
     else $('agList').innerHTML = items.map(i => {
       const d = new Date(i.at), dd = Math.round((midnight(d) - today)/DAY);
-      const when = i.at <= now.getTime() ? 'Nu bezig' : dd === 0 ? 'Vandaag, over ' + dur(i.at - now) : 'Morgen';
+      const when = i.at <= now.getTime() ? 'Nu bezig' : dd === 0 ? 'Vandaag, over ' + dur(i.at - now) : dd === 1 ? 'Morgen' : cap(fShort.format(d));
       return '<div class="row"><div class="l"><div class="n">'+esc(i.title)+'</div><div class="s">'+when+'</div></div><div class="r">'+hm(d)+'</div></div>';
     }).join('');
-    $('agFoot').textContent = a.battery != null ? 'Batterij ' + a.battery + '% toen de lader erin ging om ' + hm(got) : '';
+    const more = upcoming.length - items.length;
+    $('agFoot').textContent = (more > 0 ? 'En nog ' + more + (more === 1 ? ' afspraak' : ' afspraken') + ' deze week. ' : '') + (a.battery != null ? 'Batterij ' + a.battery + '% bij het aansluiten.' : '');
   }
 
   /* ---------- timer ---------- */
